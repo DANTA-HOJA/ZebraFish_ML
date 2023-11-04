@@ -36,28 +36,88 @@ def col_dis(color1,color2):
     # -------------------------------------------------------------------------/
 
 
-def save_segment_result(dir:Path, seg:np.ndarray, idx:int):
+def save_segment_result(save_path:Path, seg:np.ndarray):
     """
     """
-    save_path = dir.joinpath(f"im0.seg{idx}.pkl")
     with open(save_path, mode="wb") as f:
         pickle.dump(seg, f)
     # -------------------------------------------------------------------------/
 
 
-def save_seg_on_img(dir:Path, img:np.ndarray, seg:np.ndarray, idx:int):
+def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
     """
     """
     seg_on_img = np.uint8(mark_boundaries(img, seg)*255)
-    save_path = dir.joinpath(f"im0.seg{idx}.png")
     cv2.imwrite(str(save_path), seg_on_img)
+    # -------------------------------------------------------------------------/
+
+
+def run_single_segment_result(dir:Path, img_path:str):
+    """
+    """
+    im0 = cv2.imread(img_path)
+        
+    seg0 = slic(im0, n_segments = 250,
+                     channel_axis=-1,
+                     convert2lab=True,
+                     enforce_connectivity=True,
+                     slic_zero=False, compactness=30,
+                     max_num_iter=100,
+                     sigma = [1.7,1.7],
+                     spacing=[1,1], # 3D: z, y, x; 2D: y, x
+                     min_size_factor=0.4,
+                     max_size_factor=3,
+                     start_label=0)
+        # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
+
+    """ save original `seg_result` ( without merge ) """
+    save_path = dir.joinpath(f"im0.seg0.pkl")
+    save_segment_result(save_path, seg0)
+
+    """ overlapping original image with its `seg_result` """
+    save_path = dir.joinpath(f"im0.seg0.png")
+    save_seg_on_img(save_path, im0, seg0)
+
+    """ merging neighbors ('black background' and 'similar color') """
+    lindex = 501 # new labels on seg1 starts from 501
+    seg1 = deepcopy(seg0)
+    labels = np.unique(seg0)
+    for label in labels:
+        if label > 0 and label < 900:
+            bw = seg1 == label
+            A = np.sum(bw)
+            if A > 0:
+                color1 = bwRGB(bw,im0)
+                color_dist = col_dis(color1,[0,0,0]) # compare with 'black background'
+                if color_dist < dark:
+                    seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
+                else:
+                    seg1[seg1==label] = lindex
+                        # looking for neighbors
+                    bwd = dila(bw)
+                    nlabels = np.unique(seg1[bwd]) # neibor's labels
+                    for nl in nlabels:
+                        if nl > label and nl < 500:
+                            bw2 = seg1 == nl
+                            color2 = bwRGB(bw2,im0)
+                            if col_dis(color1,color2) < merge:
+                                seg1[seg1==nl] = lindex
+                lindex +=1
+
+    """ save merged `seg_result` """
+    save_path = dir.joinpath(f"im0.seg1.pkl")
+    save_segment_result(save_path, seg1)
+
+    """ overlapping original image with merged `seg_result` """
+    save_path = dir.joinpath(f"im0.seg1.png")
+    save_seg_on_img(save_path, im0, seg1)
     # -------------------------------------------------------------------------/
 
 
 if __name__ == '__main__':
 
     # colloct image file names
-    path0 = Path('./') # directory of input images, images extension: .tif / .tiff
+    path0 = Path('./TestData/HD_fish_1/') # directory of input images, images extension: .tif / .tiff
 
     # scan files
     files = path0.glob("*.tif*")
@@ -69,57 +129,5 @@ if __name__ == '__main__':
     merge = 12
     dark  = 40
 
-    for i in range(len(files)):
-
-        im0 = cv2.imread(files[i])
-        
-        seg0 = slic(im0, n_segments = 250,
-                         channel_axis=-1,
-                         convert2lab=True,
-                         enforce_connectivity=True,
-                         slic_zero=False, compactness=30,
-                         max_num_iter=100,
-                         sigma = [1.7,1.7],
-                         spacing=[1,1], # 3D: z, y, x; 2D: y, x
-                         min_size_factor=0.4,
-                         max_size_factor=3,
-                         start_label=0)
-        # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
-
-        """ save original `seg_result` ( without merge ) """
-        save_segment_result(path0, seg0, idx=0)
-
-        """ overlapping original image with its `seg_result` """
-        save_seg_on_img(path0, im0, seg0, idx=0)
-
-        """ merging neighbors ('black background' and 'similar color') """
-        lindex = 501 # new labels on seg1 starts from 501
-        seg1 = deepcopy(seg0)
-        labels = np.unique(seg0)
-        for label in labels:
-            if label > 0 and label < 900:
-                bw = seg1 == label
-                A = np.sum(bw)
-                if A > 0:
-                    color1 = bwRGB(bw,im0)
-                    color_dist = col_dis(color1,[0,0,0]) # compare with 'black background'
-                    if color_dist < dark:
-                        seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
-                    else:
-                        seg1[seg1==label] = lindex
-                        # looking for neighbors
-                        bwd = dila(bw)
-                        nlabels=np.unique(seg1[bwd]) # neibor's labels
-                        for nl in nlabels:
-                            if nl > label and nl < 500:
-                                bw2 = seg1 ==nl
-                                color2 = bwRGB(bw2,im0)
-                                if col_dis(color1,color2) < merge:
-                                    seg1[seg1==nl] = lindex
-                    lindex +=1
-
-        """ save merged `seg_result` """
-        save_segment_result(path0, seg1, idx=1)
-
-        """ overlapping original image with merged `seg_result` """
-        save_seg_on_img(path0, im0, seg1, idx=1)
+    for file in files:
+        run_single_segment_result(path0, file)
