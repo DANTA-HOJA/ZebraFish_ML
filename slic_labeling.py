@@ -1,40 +1,51 @@
 # -*- coding: utf-8 -*-
 """
 """
-
 import os
-import numpy as np
-import cv2
 import pickle
-from skimage.segmentation import mark_boundaries
-from skimage.segmentation import slic
-from scipy.ndimage.morphology import binary_dilation as dila
+from copy import deepcopy
+from pathlib import Path
+
+import cv2
+import numpy as np
+from scipy.ndimage import binary_dilation as dila
+from skimage.segmentation import mark_boundaries, slic
+# -----------------------------------------------------------------------------/
+
 
 def bwRGB(bw,im):
+    """
+    """
     A = np.sum(bw)
     B = np.sum(im[bw,0])/A
     G = np.sum(im[bw,1])/A
     R = np.sum(im[bw,2])/A
     return [R,G,B]
+    # -------------------------------------------------------------------------/
+
 
 def col_dis(color1,color2):
+    """
+    """
     sum = 0
     for i in range(3):
         ds = (float(color1[i]) - float(color2[i]))**2
         sum =sum+ds
     delta_e = np.sqrt(sum)
     return delta_e
+    # -------------------------------------------------------------------------/
 
-path0 = './'
-#%% colloct image file names     
-files = []
-for folderName, subfolders, filenames in os.walk(path0):
-    for filename in filenames:
-        if 'tif' in filename and folderName == path0:
-            files.append(folderName+'/'+filename)
 
-print('total files:', len(files))
-#%% slic each image
+
+if __name__ == '__main__':
+
+    # colloct image file names
+    path0 = Path('./') # directory of input images, images extension: .tif / .tiff
+
+    # scan files
+    files = path0.glob("*.tif*")
+    files = [str(path) for path in files]
+    print('total files:', len(files))
 
 # these are two parameters as color space distance, determined by experiences
 merge = 12 
