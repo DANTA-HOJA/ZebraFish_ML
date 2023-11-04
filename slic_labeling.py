@@ -52,7 +52,8 @@ def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
     # -------------------------------------------------------------------------/
 
 
-def run_single_segment_result(dir:Path, img_path:str):
+def run_single_segment_result(dir:Path, img_path:str,
+                              merge:int, dark:int):
     """
     """
     im0 = cv2.imread(img_path)
@@ -93,7 +94,7 @@ def run_single_segment_result(dir:Path, img_path:str):
                     seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
                 else:
                     seg1[seg1==label] = lindex
-                        # looking for neighbors
+                    # looking for neighbors
                     bwd = dila(bw)
                     nlabels = np.unique(seg1[bwd]) # neibor's labels
                     for nl in nlabels:
@@ -130,4 +131,4 @@ if __name__ == '__main__':
     dark  = 40
 
     for file in files:
-        run_single_segment_result(path0, file)
+        run_single_segment_result(path0, file, merge, dark)
