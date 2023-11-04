@@ -73,18 +73,18 @@ if __name__ == '__main__':
 
         im0 = cv2.imread(files[i])
         
-    seg0 = slic(im0, n_segments = 500,
-                    multichannel=True,
-                    convert2lab=True,
-                    enforce_connectivity=True,
-                    slic_zero=False, compactness=30,
-                    max_iter=100,              
-                    sigma = [0,1.7,1.7],
-                    spacing=[0,1,1],#z,y,x
-                    min_size_factor=0.4,
-                    max_size_factor=3,
-                    start_label=0)
-    # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
+        seg0 = slic(im0, n_segments = 250,
+                         channel_axis=-1,
+                         convert2lab=True,
+                         enforce_connectivity=True,
+                         slic_zero=False, compactness=30,
+                         max_num_iter=100,
+                         sigma = [1.7,1.7],
+                         spacing=[1,1], # 3D: z, y, x; 2D: y, x
+                         min_size_factor=0.4,
+                         max_size_factor=3,
+                         start_label=0)
+        # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
 
         """ save original `seg_result` ( without merge ) """
         save_segment_result(path0, seg0, idx=0)
