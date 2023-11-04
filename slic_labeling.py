@@ -36,6 +36,23 @@ def col_dis(color1,color2):
     # -------------------------------------------------------------------------/
 
 
+def save_segment_result(dir:Path, seg:np.ndarray, idx:int):
+    """
+    """
+    save_path = dir.joinpath(f"im0.seg{idx}.pkl")
+    with open(save_path, mode="wb") as f:
+        pickle.dump(seg, f)
+    # -------------------------------------------------------------------------/
+
+
+def save_seg_on_img(dir:Path, img:np.ndarray, seg:np.ndarray, idx:int):
+    """
+    """
+    seg_on_img = np.uint8(mark_boundaries(img, seg)*255)
+    save_path = dir.joinpath(f"im0.seg{idx}.png")
+    cv2.imwrite(str(save_path), seg_on_img)
+    # -------------------------------------------------------------------------/
+
 
 if __name__ == '__main__':
 
@@ -47,14 +64,15 @@ if __name__ == '__main__':
     files = [str(path) for path in files]
     print('total files:', len(files))
 
-# these are two parameters as color space distance, determined by experiences
-merge = 12 
-dark =  40
+    """ slic each image """
+    # these are two parameters as color space distance, determined by experiences
+    merge = 12
+    dark  = 40
 
-for i in range(len(files)):
+    for i in range(len(files)):
 
-    im0 = cv2.imread(files[i])
-    
+        im0 = cv2.imread(files[i])
+        
     seg0 = slic(im0, n_segments = 500,
                     multichannel=True,
                     convert2lab=True,
@@ -68,43 +86,40 @@ for i in range(len(files)):
                     start_label=0)
     # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
 
-    f = open(path0+'im'+str(i)+'.seg0.pkl','wb')
-    pickle.dump(seg0,f)
-    f.close()
-    
-    im1 = np.uint8(mark_boundaries(im0, seg0)*255)
-    cv2.imwrite(path0+'im'+str(i)+'.seg0.png',im1)
+        """ save original `seg_result` ( without merge ) """
+        save_segment_result(path0, seg0, idx=0)
 
-    #%% first time merging neighbors
-    labels = np.unique(seg0)
-    seg1 = seg0.copy()
-    lindex=501 # new labels on seg1 starts from 501
-    for label in labels:
-        if label > 0 and label < 900:
-            bw = seg1 == label 
-            A = np.sum(bw)
-            if A > 0:
-                color1 = bwRGB(bw,im0)
-                color_dist = col_dis(color1,[0,0,0])
-                if color_dist < dark:
-                    seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
-                else:
-                    seg1[seg1==label] = lindex 
-                    # looking for neighbors
-                    bwd = dila(bw)
-                    nlabels=np.unique(seg1[bwd]) # neibor's labels
-                    for nl in nlabels:
-                        if nl > label and nl < 500:
-                            bw2 = seg1 ==nl
-                            color2 = bwRGB(bw2,im0)
-                            if col_dis(color1,color2) < merge: 
-                                seg1[seg1==nl]=lindex 
-                lindex +=1 
-    
-    
-    f = open(path0+'im'+str(i)+'.seg1.pkl','wb')
-    pickle.dump(seg1,f)
-    f.close()
-        
-    im1 = np.uint8(mark_boundaries(im0, seg1)*255)
-    cv2.imwrite(path0+'im'+str(i)+'.seg1.png',im1)
+        """ overlapping original image with its `seg_result` """
+        save_seg_on_img(path0, im0, seg0, idx=0)
+
+        """ merging neighbors ('black background' and 'similar color') """
+        lindex = 501 # new labels on seg1 starts from 501
+        seg1 = deepcopy(seg0)
+        labels = np.unique(seg0)
+        for label in labels:
+            if label > 0 and label < 900:
+                bw = seg1 == label
+                A = np.sum(bw)
+                if A > 0:
+                    color1 = bwRGB(bw,im0)
+                    color_dist = col_dis(color1,[0,0,0]) # compare with 'black background'
+                    if color_dist < dark:
+                        seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
+                    else:
+                        seg1[seg1==label] = lindex
+                        # looking for neighbors
+                        bwd = dila(bw)
+                        nlabels=np.unique(seg1[bwd]) # neibor's labels
+                        for nl in nlabels:
+                            if nl > label and nl < 500:
+                                bw2 = seg1 ==nl
+                                color2 = bwRGB(bw2,im0)
+                                if col_dis(color1,color2) < merge:
+                                    seg1[seg1==nl] = lindex
+                    lindex +=1
+
+        """ save merged `seg_result` """
+        save_segment_result(path0, seg1, idx=1)
+
+        """ overlapping original image with merged `seg_result` """
+        save_seg_on_img(path0, im0, seg1, idx=1)
