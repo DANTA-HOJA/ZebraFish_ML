@@ -121,7 +121,7 @@ def run_single_segment_result(dir:Path, img_path:str,
 if __name__ == '__main__':
 
     # colloct image file names
-    path0 = Path('./TestData/HD_fish_1/') # directory of input images, images extension: .tif / .tiff
+    path0 = Path('./') # directory of input images, images extension: .tif / .tiff
 
     # scan files
     files = path0.glob("*.tif*")
