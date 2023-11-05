@@ -53,7 +53,7 @@ def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
 
 
 def run_single_slic_process(dir:Path, img_path:str,
-                              merge:int, dark:int):
+                            n_segments:int, merge:int, dark:int):
     """
     """
     img_name = os.path.split(img_path)[-1]
@@ -61,7 +61,7 @@ def run_single_slic_process(dir:Path, img_path:str,
     
     img = cv2.imread(img_path)
     
-    seg0 = slic(img, n_segments = 250,
+    seg0 = slic(img, n_segments = n_segments,
                      channel_axis=-1,
                      convert2lab=True,
                      enforce_connectivity=True,
@@ -123,20 +123,20 @@ def run_single_slic_process(dir:Path, img_path:str,
 if __name__ == '__main__':
 
     # colloct image file names
-    path0 = Path('./') # directory of input images, images extension: .tif / .tiff
+    img_dir = Path('./') # directory of input images, images extension: .tif / .tiff
 
     # scan files
-    files = path0.glob("*.tif*")
-    files = [str(path) for path in files]
-    print('total files:', len(files))
+    img_paths = img_dir.glob("*.tif*")
+    img_paths = [str(path) for path in img_paths]
+    print('total files:', len(img_paths))
 
     """ slic each image """
     # these are two parameters as color space distance, determined by experiences
     merge = 12
     dark  = 40
 
-    for file in files:
+    for img_path in img_paths:
         
-        merged_seg = run_single_slic_process(path0, file, merge, dark)
-        cell_count = len(np.unique(merged_seg))-1
-        with open(path0.joinpath(f"cell_count_{cell_count}"), mode="w") as f_writer: pass # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
+        merged_seg = run_single_slic_process(img_dir, img_path, 250, merge, dark)
+        cell_count = len(np.unique(merged_seg))-1  # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
+        with open(img_dir.joinpath(f"cell_count_{cell_count}"), mode="w") as f_writer: pass
