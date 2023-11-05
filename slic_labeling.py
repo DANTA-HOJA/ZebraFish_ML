@@ -115,6 +115,8 @@ def run_single_segment_result(dir:Path, img_path:str,
     """ overlapping original image with merged `seg_result` """
     save_path = dir.joinpath(f"{img_name}.seg1.png")
     save_seg_on_img(save_path, img, seg1)
+    
+    return seg1
     # -------------------------------------------------------------------------/
 
 
@@ -134,4 +136,7 @@ if __name__ == '__main__':
     dark  = 40
 
     for file in files:
-        run_single_segment_result(path0, file, merge, dark)
+        
+        merged_seg = run_single_segment_result(path0, file, merge, dark)
+        cell_count = len(np.unique(merged_seg))-1
+        with open(path0 + f"cell_count_{cell_count}", mode="w") as f_writer: pass # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
