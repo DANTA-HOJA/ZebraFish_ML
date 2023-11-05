@@ -56,9 +56,12 @@ def run_single_segment_result(dir:Path, img_path:str,
                               merge:int, dark:int):
     """
     """
-    im0 = cv2.imread(img_path)
-        
-    seg0 = slic(im0, n_segments = 250,
+    img_name = os.path.split(img_path)[-1]
+    img_name = os.path.splitext(img_name)[0]
+    
+    img = cv2.imread(img_path)
+    
+    seg0 = slic(img, n_segments = 250,
                      channel_axis=-1,
                      convert2lab=True,
                      enforce_connectivity=True,
@@ -72,12 +75,12 @@ def run_single_segment_result(dir:Path, img_path:str,
         # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
 
     """ save original `seg_result` ( without merge ) """
-    save_path = dir.joinpath(f"im0.seg0.pkl")
+    save_path = dir.joinpath(f"{img_name}.seg0.pkl")
     save_segment_result(save_path, seg0)
 
     """ overlapping original image with its `seg_result` """
-    save_path = dir.joinpath(f"im0.seg0.png")
-    save_seg_on_img(save_path, im0, seg0)
+    save_path = dir.joinpath(f"{img_name}.seg0.png")
+    save_seg_on_img(save_path, img, seg0)
 
     """ merging neighbors ('black background' and 'similar color') """
     lindex = 501 # new labels on seg1 starts from 501
@@ -88,8 +91,8 @@ def run_single_segment_result(dir:Path, img_path:str,
             bw = seg1 == label
             A = np.sum(bw)
             if A > 0:
-                color1 = bwRGB(bw,im0)
-                color_dist = col_dis(color1,[0,0,0]) # compare with 'black background'
+                color1 = bwRGB(bw, img)
+                color_dist = col_dis(color1, [0,0,0]) # compare with 'black background'
                 if color_dist < dark:
                     seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
                 else:
@@ -100,18 +103,18 @@ def run_single_segment_result(dir:Path, img_path:str,
                     for nl in nlabels:
                         if nl > label and nl < 500:
                             bw2 = seg1 == nl
-                            color2 = bwRGB(bw2,im0)
-                            if col_dis(color1,color2) < merge:
+                            color2 = bwRGB(bw2, img)
+                            if col_dis(color1, color2) < merge:
                                 seg1[seg1==nl] = lindex
                 lindex +=1
 
     """ save merged `seg_result` """
-    save_path = dir.joinpath(f"im0.seg1.pkl")
+    save_path = dir.joinpath(f"{img_name}.seg1.pkl")
     save_segment_result(save_path, seg1)
 
     """ overlapping original image with merged `seg_result` """
-    save_path = dir.joinpath(f"im0.seg1.png")
-    save_seg_on_img(save_path, im0, seg1)
+    save_path = dir.joinpath(f"{img_name}.seg1.png")
+    save_seg_on_img(save_path, img, seg1)
     # -------------------------------------------------------------------------/
 
 
