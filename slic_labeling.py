@@ -7,6 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import binary_dilation as dila
 from skimage.segmentation import mark_boundaries, slic
@@ -53,7 +54,8 @@ def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
 
 
 def run_single_slic_process(dir:Path, img_path:str,
-                            n_segments:int, merge:int, dark:int):
+                            n_segments:int, dark:int, merge:int=0,
+                            debug_mode:bool=False):
     """
     """
     img_name = os.path.split(img_path)[-1]
@@ -83,30 +85,40 @@ def run_single_slic_process(dir:Path, img_path:str,
     save_seg_on_img(save_path, img, seg0)
 
     """ merging neighbors ('black background' and 'similar color') """
-    lindex = 501 # new labels on seg1 starts from 501
-    seg1 = deepcopy(seg0)
     labels = np.unique(seg0)
+    max_label = np.max(labels)
+    lindex = max_label + 1 # new labels on seg1 starts from `max_label` + 1
+    seg1 = deepcopy(seg0) # copy the slic segment to 're-index' and 'merge'
     for label in labels:
-        if label > 0 and label < 900:
-            bw = seg1 == label
-            A = np.sum(bw)
-            if A > 0:
-                color1 = bwRGB(bw, img)
-                color_dist = col_dis(color1, [0,0,0]) # compare with 'black background'
-                if color_dist < dark:
-                    seg1[seg1==label] = 0 # dark region on seg1 is labeled as 0
-                else:
-                    seg1[seg1==label] = lindex
-                    # looking for neighbors
+        bw = (seg1 == label)
+        
+        if debug_mode:
+            tmp_array = np.zeros_like(bw, dtype=np.uint8)
+            tmp_array[bw] = 255  # 将True值设置为255，以渲染为白色
+            plt.imshow(tmp_array, cmap='gray', vmax=255, vmin=0)
+            plt.title(f"label = {label}")
+            plt.show()
+        
+        if np.sum(bw) > 0:
+            color1 = bwRGB(bw, img)
+            color_dist = col_dis(color1, [0, 0, 0]) # compare with 'black background'
+            if color_dist <= dark:
+                seg1[(seg1 == label)] = 0 # dark region on seg1 is labeled as 0
+            else:
+                seg1[(seg1 == label)] = lindex # re-index
+                # looking for neighbors
+                if merge > 0:
                     bwd = dila(bw)
                     nlabels = np.unique(seg1[bwd]) # neibor's labels
                     for nl in nlabels:
-                        if nl > label and nl < 500:
-                            bw2 = seg1 == nl
+                        if nl > label and nl <= max_label: # old index only
+                            bw2 = (seg1 == nl)
                             color2 = bwRGB(bw2, img)
-                            if col_dis(color1, color2) < merge:
-                                seg1[seg1==nl] = lindex
+                            if col_dis(color1, color2) <= merge:
+                                seg1[(seg1 == nl)] = lindex
                 lindex +=1
+        else:
+            print(f"'{label}' has been merged before dealing with")
 
     """ save merged `seg_result` """
     save_path = dir.joinpath(f"{img_name}.seg1.pkl")
@@ -128,15 +140,19 @@ if __name__ == '__main__':
     # scan files
     img_paths = img_dir.glob("*.tif*")
     img_paths = [str(path) for path in img_paths]
-    print('total files:', len(img_paths))
+    print(f"Total files: {len(img_paths)}")
 
     """ slic each image """
-    # these are two parameters as color space distance, determined by experiences
-    merge = 12
+    # `dark` and `merge` are two parameters as color space distance, determined by experiences
+    n_segments = 250
     dark  = 40
+    merge = 12
+    debug_mode = True
 
     for img_path in img_paths:
-        
-        merged_seg = run_single_slic_process(img_dir, img_path, 250, merge, dark)
-        cell_count = len(np.unique(merged_seg))-1  # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
+        seg_result = run_single_slic_process(img_dir, img_path,
+                                             n_segments, dark, merge,
+                                             debug_mode)
+        cell_count = len(np.unique(seg_result))-1  # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
         with open(img_dir.joinpath(f"cell_count_{cell_count}"), mode="w") as f_writer: pass
+    # -------------------------------------------------------------------------/
