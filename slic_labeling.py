@@ -52,7 +52,7 @@ def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
     # -------------------------------------------------------------------------/
 
 
-def run_single_segment_result(dir:Path, img_path:str,
+def run_single_slic_process(dir:Path, img_path:str,
                               merge:int, dark:int):
     """
     """
@@ -137,6 +137,6 @@ if __name__ == '__main__':
 
     for file in files:
         
-        merged_seg = run_single_segment_result(path0, file, merge, dark)
+        merged_seg = run_single_slic_process(path0, file, merge, dark)
         cell_count = len(np.unique(merged_seg))-1
         with open(path0.joinpath(f"cell_count_{cell_count}"), mode="w") as f_writer: pass # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
