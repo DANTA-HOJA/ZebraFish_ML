@@ -123,7 +123,7 @@ def run_single_segment_result(dir:Path, img_path:str,
 if __name__ == '__main__':
 
     # colloct image file names
-    path0 = Path('./') # directory of input images, images extension: .tif / .tiff
+    path0 = Path('./TestData/HD_fish_1/') # directory of input images, images extension: .tif / .tiff
 
     # scan files
     files = path0.glob("*.tif*")
@@ -139,4 +139,4 @@ if __name__ == '__main__':
         
         merged_seg = run_single_segment_result(path0, file, merge, dark)
         cell_count = len(np.unique(merged_seg))-1
-        with open(path0 + f"cell_count_{cell_count}", mode="w") as f_writer: pass # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
+        with open(path0.joinpath(f"cell_count_{cell_count}"), mode="w") as f_writer: pass # 估計的細胞數量。 P.S. -1 是因為 label 0 是 background
