@@ -82,7 +82,7 @@ if __name__ == '__main__':
             result_name = os.path.split(result_path)[-1]
             result_name = os.path.splitext(result_name)[0]
             dname_dir = Path(result_path.replace(str(Path(rel_path)), ""))
-            slic_dir = dname_dir.joinpath(f"SLIC/{result_name}")
+            slic_dir = dname_dir.joinpath(f"SLIC/{result_name}_{{dark_{dark}}}")
             create_new_dir(slic_dir)
             
             print(f"[ {os.path.split(dname_dir)[-1]} ]")
