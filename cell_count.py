@@ -54,20 +54,22 @@ if __name__ == '__main__':
     cli_out.divide()
     processed_di = ProcessedDataInstance()
     processed_di.set_attrs("cell_count.toml")
-    cli_out.divide()
 
-    """ Colloct image file names """
-    rel_path, result_paths = processed_di._get_sorted_results("palmskin", "RGB_direct_max_zproj")
-    print(f"Total files: {len(result_paths)}\n")
-
-    """ Load config """
+    # load config
     # `dark` and `merge` are two parameters as color space distance, determined by experiences
     config = load_config("cell_count.toml")
+    palmskin_result_alias = config["data_processed"]["palmskin_result_alias"]
     n_segments = config["slic"]["n_segments"]
     dark       = config["slic"]["dark"]
     merge      = config["slic"]["merge"]
     debug_mode = config["slic"]["debug_mode"]
-    print(Pretty(config, expand_all=True))
+    print("", Pretty(config, expand_all=True))
+    cli_out.divide()
+
+    """ Colloct image file names """
+    rel_path, result_paths = \
+        processed_di._get_sorted_results("palmskin", palmskin_result_alias)
+    print(f"Total files: {len(result_paths)}")
 
     """ Apply SLIC on each image """
     cli_out.divide()
@@ -77,8 +79,10 @@ if __name__ == '__main__':
         for result_path in result_paths:
             
             result_path = str(result_path)
-            dname_dir = Path(result_path.replace(rel_path, ""))
-            slic_dir = dname_dir.joinpath("SLIC")
+            result_name = os.path.split(result_path)[-1]
+            result_name = os.path.splitext(result_name)[0]
+            dname_dir = Path(result_path.replace(str(Path(rel_path)), ""))
+            slic_dir = dname_dir.joinpath(f"SLIC/{result_name}")
             create_new_dir(slic_dir)
             
             print(f"[ {os.path.split(dname_dir)[-1]} ]")
@@ -89,7 +93,7 @@ if __name__ == '__main__':
             cli_out.new_line()
             
             # update info to toml file
-            toml_file = slic_dir.joinpath("slic_analysis.toml")
+            toml_file = slic_dir.joinpath(f"{result_name}.ana.toml")
             update_toml_file(toml_file, analysis_dict)
             
             # update pbar
