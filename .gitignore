@@ -6,6 +6,7 @@ __pycache__
 *.toml
 
 *.png
-*.tif*
+*.tif
+*.tiff
 
 TestData/**
