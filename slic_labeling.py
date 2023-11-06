@@ -54,8 +54,8 @@ def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
 
 
 def run_single_slic_analysis(dir:Path, img_path:str,
-                            n_segments:int, dark:int, merge:int=0,
-                            debug_mode:bool=False):
+                             n_segments:int, dark:int, merge:int=0,
+                             debug_mode:bool=False):
     """
     """
     img_name = os.path.split(img_path)[-1]
@@ -87,7 +87,7 @@ def run_single_slic_analysis(dir:Path, img_path:str,
     """ merging neighbors ('black background' and 'similar color') """
     labels = np.unique(seg0)
     max_label = np.max(labels)
-    lindex = max_label + 1 # new labels on seg1 starts from `max_label` + 1
+    lindex = max_label + 1 # new (re-index) labels on seg1 starts from `max_label` + 1
     seg1 = deepcopy(seg0) # copy the slic segment to 're-index' and 'merge'
     for label in labels:
         bw = (seg1 == label)
