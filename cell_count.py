@@ -12,7 +12,7 @@ from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.shared.clioutput import CLIOutput
 from modules.shared.config import dump_config, load_config
 from modules.shared.utils import create_new_dir, get_repo_root
-from slic_labeling import run_single_slic_process
+from slic_labeling import run_single_slic_analysis
 
 install()
 # -----------------------------------------------------------------------------/
@@ -86,9 +86,9 @@ if __name__ == '__main__':
             create_new_dir(slic_dir)
             
             print(f"[ {os.path.split(dname_dir)[-1]} ]")
-            seg_result = run_single_slic_process(slic_dir, result_path,
-                                                 n_segments, dark, merge,
-                                                 debug_mode)
+            seg_result = run_single_slic_analysis(slic_dir, result_path,
+                                                  n_segments, dark, merge,
+                                                  debug_mode)
             analysis_dict = gen_slic_analysis_dict(seg_result, merge)
             cli_out.new_line()
             
