@@ -63,18 +63,19 @@ def run_single_slic_analysis(dir:Path, img_path:str,
     
     img = cv2.imread(img_path)
     
-    seg0 = slic(img, n_segments = n_segments,
-                     channel_axis=-1,
-                     convert2lab=True,
-                     enforce_connectivity=True,
-                     slic_zero=False, compactness=30,
-                     max_num_iter=100,
-                     sigma = [1.7,1.7],
-                     spacing=[1,1], # 3D: z, y, x; 2D: y, x
-                     min_size_factor=0.4,
-                     max_size_factor=3,
-                     start_label=0)
-        # parameters can refer to https://www.kite.com/python/docs/skimage.segmentation.slic
+    seg0 = slic(cv2.cvtColor(img, cv2.COLOR_BGR2RGB),
+                    n_segments = n_segments,
+                    channel_axis=-1,
+                    convert2lab=True,
+                    enforce_connectivity=True,
+                    slic_zero=False, compactness=30,
+                    max_num_iter=100,
+                    sigma = [1.7,1.7],
+                    spacing=[1,1], # 3D: z, y, x; 2D: y, x
+                    min_size_factor=0.4,
+                    max_size_factor=3,
+                    start_label=0)
+        # parameters can refer to https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.slic
 
     """ save original `seg_result` ( without merge ) """
     save_path = dir.joinpath(f"{img_name}.seg0.pkl")
