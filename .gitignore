@@ -9,4 +9,4 @@ __pycache__
 *.tif
 *.tiff
 
-TestData/**
+data/**
