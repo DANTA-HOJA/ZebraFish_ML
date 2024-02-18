@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from rich import print
@@ -18,7 +19,7 @@ install()
 # -----------------------------------------------------------------------------/
 
 
-def gen_slic_analysis_dict(seg:np.ndarray, merge:int=0) -> dict[str, any]:
+def gen_slic_analysis_dict(seg:np.ndarray, merge:int) -> dict[str, Any]:
     """
     """
     tmp_dict: dict = {}
@@ -53,22 +54,23 @@ if __name__ == '__main__':
     cli_out = CLIOutput()
     cli_out.divide()
     processed_di = ProcessedDataInstance()
-    processed_di.set_attrs("cell_count.toml")
+    processed_di.parse_config("cell_count.toml")
 
     # load config
     # `dark` and `merge` are two parameters as color space distance, determined by experiences
     config = load_config("cell_count.toml")
-    palmskin_result_alias = config["data_processed"]["palmskin_result_alias"]
-    n_segments = config["slic"]["n_segments"]
-    dark       = config["slic"]["dark"]
-    merge      = config["slic"]["merge"]
-    debug_mode = config["slic"]["debug_mode"]
+    palmskin_result_name: str = config["data_processed"]["palmskin_result_name"]
+    n_segments: int  = config["slic"]["n_segments"]
+    dark: int        = config["slic"]["dark"]
+    merge: int       = config["slic"]["merge"]
+    debug_mode: bool = config["slic"]["debug_mode"]
     print("", Pretty(config, expand_all=True))
     cli_out.divide()
 
     """ Colloct image file names """
-    rel_path, result_paths = \
-        processed_di._get_sorted_results("palmskin", palmskin_result_alias)
+    rel_path, sorted_results_dict = \
+        processed_di.get_sorted_results_dict("palmskin", palmskin_result_name)
+    result_paths = list(sorted_results_dict.values())
     print(f"Total files: {len(result_paths)}")
 
     """ Apply SLIC on each image """
@@ -78,14 +80,12 @@ if __name__ == '__main__':
         
         for result_path in result_paths:
             
-            result_path = str(result_path)
-            result_name = os.path.split(result_path)[-1]
-            result_name = os.path.splitext(result_name)[0]
-            dname_dir = Path(result_path.replace(str(Path(rel_path)), ""))
+            result_name = result_path.stem
+            dname_dir = Path(str(result_path).replace(rel_path, ""))
             slic_dir = dname_dir.joinpath(f"SLIC/{result_name}_{{dark_{dark}}}")
             create_new_dir(slic_dir)
             
-            print(f"[ {os.path.split(dname_dir)[-1]} ]")
+            print(f"[ {dname_dir.parts[-1]} ]")
             seg_result = run_single_slic_analysis(slic_dir, result_path,
                                                   n_segments, dark, merge,
                                                   debug_mode)

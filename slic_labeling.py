@@ -53,15 +53,13 @@ def save_seg_on_img(save_path:Path, img:np.ndarray, seg:np.ndarray):
     # -------------------------------------------------------------------------/
 
 
-def run_single_slic_analysis(dir:Path, img_path:str,
-                             n_segments:int, dark:int, merge:int=0,
+def run_single_slic_analysis(dir:Path, img_path:Path,
+                             n_segments:int, dark:int, merge:int,
                              debug_mode:bool=False):
     """
     """
-    img_name = os.path.split(img_path)[-1]
-    img_name = os.path.splitext(img_name)[0]
-    
-    img = cv2.imread(img_path)
+    img_name = img_path.stem
+    img = cv2.imread(str(img_path))
     
     seg0 = slic(cv2.cvtColor(img, cv2.COLOR_BGR2RGB),
                     n_segments = n_segments,
