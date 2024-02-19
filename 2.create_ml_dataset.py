@@ -19,7 +19,8 @@ install()
 
 if __name__ == '__main__':
     
-    print(f"Repository: '{get_repo_root()}'")
+    repo_root = get_repo_root()
+    print(f"Repository: '{repo_root}'")
     
     """ Init components """
     cli_out = CLIOutput()
@@ -70,9 +71,8 @@ if __name__ == '__main__':
         else: dataset_df = pd.concat([dataset_df, temp_df], ignore_index=True)
     
     # save Dataframe as a CSV file
-    save_dir = Path("./data/generated/ML")
-    save_path = save_dir.joinpath(processed_di.instance_name,
-                                  cluster_desc, slic_dirname, f"ml_dataset.csv")
+    save_path = repo_root.joinpath("data/generated/ML", processed_di.instance_name,
+                                   cluster_desc, slic_dirname, f"ml_dataset.csv")
     create_new_dir(save_path.parent)
     dataset_df.to_csv(save_path, encoding='utf_8_sig', index=False)
     print(f"ML_table: '{save_path}'\n")
