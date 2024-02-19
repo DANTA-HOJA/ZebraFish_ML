@@ -98,23 +98,13 @@ def run_single_slic_analysis(dir:Path, img_path:Path,
             plt.title(f"label = {label}")
             plt.show()
         
-        if np.sum(bw) > 0:
+        if np.sum(bw) > 0: # SLIC 生成的 labels 會跳號，bw 可能會沒東西
             color1 = bwRGB(bw, img)
             color_dist = col_dis(color1, [0, 0, 0]) # compare with 'black background'
             if color_dist <= dark:
                 seg1[(seg1 == label)] = 0 # dark region on seg1 is labeled as 0
             else:
                 seg1[(seg1 == label)] = lindex # re-index
-                # looking for neighbors
-                if merge > 0:
-                    bwd = dila(bw)
-                    nlabels = np.unique(seg1[bwd]) # neibor's labels
-                    for nl in nlabels:
-                        if nl > label and nl <= max_label: # old index only
-                            bw2 = (seg1 == nl)
-                            color2 = bwRGB(bw2, img)
-                            if col_dis(color1, color2) <= merge:
-                                seg1[(seg1 == nl)] = lindex
                 lindex +=1
         else:
             print(f"'{label}' has been merged before dealing with")
@@ -127,7 +117,36 @@ def run_single_slic_analysis(dir:Path, img_path:Path,
     save_path = dir.joinpath(f"{img_name}.seg1.png")
     save_seg_on_img(save_path, img, seg1)
     
-    return seg1
+    # >>> Merge similar color <<<
+    
+    seg2 = deepcopy(seg1)
+    labels = np.unique(seg2)
+    for label in labels:
+        if label != 0:
+            bw = (seg2 == label)
+            if np.sum(bw) > 0: # merge 後會跳號，bw 可能會沒東西
+                color1 = bwRGB(bw, img) # get self color
+                bwd = dila(bw) # touch neighbor
+                nlabels = np.unique(seg2[bwd]) # self + neighbor's labels
+                for nl in nlabels:
+                    if nl != label:
+                        bw2 = (seg2 == nl)
+                        color2 = bwRGB(bw2, img) # neighbor's color
+                        if col_dis(color1, color2) <= merge:
+                            seg2[bw2] = label
+            else:
+                if debug_mode:
+                    print(f"'{label}' has been merged before dealing with")
+    
+    """ save merged `seg_result` """
+    save_path = dir.joinpath(f"{img_name}.seg2.pkl")
+    save_segment_result(save_path, seg2)
+
+    """ overlapping original image with merged `seg_result` """
+    save_path = dir.joinpath(f"{img_name}.seg2.png")
+    save_seg_on_img(save_path, img, seg2)
+    
+    return seg1, seg2
     # -------------------------------------------------------------------------/
 
 
