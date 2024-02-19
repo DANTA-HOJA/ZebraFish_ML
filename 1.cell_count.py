@@ -1,5 +1,6 @@
 import os
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -19,16 +20,56 @@ install()
 # -----------------------------------------------------------------------------/
 
 
-def gen_slic_analysis_dict(seg:np.ndarray, merge:int) -> dict[str, Any]:
+def count_area(seg:np.ndarray) -> tuple[int, str]:
+    """ unit: pixel
+    """
+    foreground = seg > 0
+    return int(np.sum(foreground)), "area"
+    # -------------------------------------------------------------------------/
+
+
+def count_element(seg:np.ndarray, key:str) -> tuple[int, str]:
     """
     """
-    tmp_dict: dict = {}
-    tmp_key = ""
-    if merge > 0: tmp_key = "cell_count_merge"
-    else: tmp_key = "cell_count"
-    tmp_dict[tmp_key] = len(np.unique(seg))-1
+    return len(np.unique(seg))-1, f"{key}_count"
+    # -------------------------------------------------------------------------/
+
+
+def count_average_size(analysis_dict:dict[str, Any], key:str) -> tuple[float, str]:
+    """ unit: pixel
+    """
+    analysis_dict = deepcopy(analysis_dict)
+    area = analysis_dict["area"]
+    element_cnt = analysis_dict[f"{key}_count"]
     
-    return  tmp_dict
+    return  float(round(area/element_cnt, 5)), f"{key}_avg_size"
+    # -------------------------------------------------------------------------/
+
+
+def get_max_path_size(seg:np.ndarray) -> tuple[float, str]:
+    """
+    """
+    max_size = 0
+    
+    labels = np.unique(seg)
+    for label in labels:
+        if label != 0:
+            bw = (seg == label)
+            size = np.sum(bw)
+            if size > max_size:
+                max_size = size
+    
+    return int(max_size), "max_patch_size"
+    # -------------------------------------------------------------------------/
+
+
+def update_slic_analysis_dict(analysis_dict:dict[str, Any], value:Any, key:str) -> dict[str, Any]:
+    """
+    """
+    analysis_dict = deepcopy(analysis_dict)
+    analysis_dict[key] = value
+    
+    return  analysis_dict
     # -------------------------------------------------------------------------/
 
 
@@ -54,16 +95,16 @@ if __name__ == '__main__':
     cli_out = CLIOutput()
     cli_out.divide()
     processed_di = ProcessedDataInstance()
-    processed_di.parse_config("cell_count.toml")
+    processed_di.parse_config("ml_analysis.toml")
 
     # load config
     # `dark` and `merge` are two parameters as color space distance, determined by experiences
-    config = load_config("cell_count.toml")
+    config = load_config("ml_analysis.toml")
     palmskin_result_name: str = config["data_processed"]["palmskin_result_name"]
-    n_segments: int  = config["slic"]["n_segments"]
-    dark: int        = config["slic"]["dark"]
-    merge: int       = config["slic"]["merge"]
-    debug_mode: bool = config["slic"]["debug_mode"]
+    n_segments: int  = config["SLIC"]["n_segments"]
+    dark: int        = config["SLIC"]["dark"]
+    merge: int       = config["SLIC"]["merge"]
+    debug_mode: bool = config["SLIC"]["debug_mode"]
     print("", Pretty(config, expand_all=True))
     cli_out.divide()
 
@@ -86,10 +127,18 @@ if __name__ == '__main__':
             create_new_dir(slic_dir)
             
             print(f"[ {dname_dir.parts[-1]} ]")
-            seg_result = run_single_slic_analysis(slic_dir, result_path,
-                                                  n_segments, dark, merge,
-                                                  debug_mode)
-            analysis_dict = gen_slic_analysis_dict(seg_result, merge)
+            cell_seg, patch_seg = run_single_slic_analysis(slic_dir, result_path,
+                                                           n_segments, dark, merge,
+                                                           debug_mode)
+            
+            # update
+            analysis_dict = {}
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *count_area(cell_seg))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *count_element(cell_seg, "cell"))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *count_element(patch_seg, "patch"))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *count_average_size(analysis_dict, "cell"))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *count_average_size(analysis_dict, "patch"))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *get_max_path_size(patch_seg))
             cli_out.new_line()
             
             # update info to toml file
