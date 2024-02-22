@@ -19,7 +19,7 @@ from modules.shared.utils import get_repo_root
 # -----------------------------------------------------------------------------/
 # %%
 # notebook name
-notebook_name = Path("3.a.ml_single_cellfeat.ipynb").stem
+notebook_name = Path(__file__).stem
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -76,15 +76,15 @@ assert feature in df.columns, \
 
 # -----------------------------------------------------------------------------/
 # %%
+input_training = training_df[feature].to_numpy()[:, None]
+
 # 初始化 Random Forest 分類器
 rand_seed = int(cluster_desc.split("_")[-1].replace("RND", ""))
 random_forest = RandomForestClassifier(n_estimators=100, random_state=rand_seed)
 
-input_training = training_df[feature].to_numpy()[:, None]
-gt_training = [label2idx[c_label] for c_label in training_df["class"]]
-
 # 訓練模型
-random_forest.fit(input_training, gt_training)
+idx_gt_training = [label2idx[c_label] for c_label in training_df["class"]]
+random_forest.fit(input_training, idx_gt_training)
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -92,13 +92,13 @@ random_forest.fit(input_training, gt_training)
 pred_train = random_forest.predict(input_training)
 pred_train = [labels[c_idx] for c_idx in pred_train]
 
-gt_train = list(training_df["class"])
+gt_training = list(training_df["class"])
 
 # reports
-cls_report = classification_report(y_true=gt_train,
+cls_report = classification_report(y_true=gt_training,
                                    y_pred=pred_train, digits=5)
 _, confusion_matrix = confusion_matrix_with_class(prediction=pred_train,
-                                                  ground_truth=gt_train)
+                                                  ground_truth=gt_training)
 # display report
 print("Classification Report:\n\n", cls_report)
 print(f"{confusion_matrix}\n")
