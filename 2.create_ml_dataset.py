@@ -28,15 +28,14 @@ if __name__ == '__main__':
     processed_di.parse_config("ml_analysis.toml")
     # load config
     config = load_config("ml_analysis.toml")
-    palmskin_result_name: str = config["data_processed"]["palmskin_result_name"]
+    palmskin_result_name: Path = Path(config["data_processed"]["palmskin_result_name"])
     cluster_desc: str = config["data_processed"]["cluster_desc"]
     dark: int = config["SLIC"]["dark"]
     print("", Pretty(config, expand_all=True))
     cli_out.divide()
     
     # get `slic_dirname`
-    palmskin_result_name = Path(palmskin_result_name).stem
-    slic_dirname = f"{palmskin_result_name}_{{dark_{dark}}}"
+    slic_dirname = f"{palmskin_result_name.stem}_{{dark_{dark}}}"
     
     # load `clustered file`
     csv_path = processed_di.clustered_files_dict[cluster_desc]
@@ -51,7 +50,7 @@ if __name__ == '__main__':
         # prepare
         path = processed_di.palmskin_processed_dir.joinpath(palmskin_dname)
         slic_analysis = path.joinpath("SLIC", slic_dirname,
-                                      f"{palmskin_result_name}.ana.toml")
+                                      f"{palmskin_result_name.stem}.ana.toml")
         slic_analysis = load_config(slic_analysis)
         fish_id = dname.get_dname_sortinfo(palmskin_dname)[0]
         
