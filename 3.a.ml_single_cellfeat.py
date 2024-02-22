@@ -70,7 +70,7 @@ training_df
 
 # -----------------------------------------------------------------------------/
 # %%
-feature = "cell_count"
+feature = config["ML"]["single_feature"]
 assert feature in df.columns, \
             f"Feature should be one of followings: {list(df.columns)[3:]}"
 
@@ -104,7 +104,7 @@ print("Classification Report:\n\n", cls_report)
 print(f"{confusion_matrix}\n")
 
 # log file
-with open(dst_dir.joinpath(f"{notebook_name}.train.log"), mode="w") as f_writer:
+with open(dst_dir.joinpath(f"{notebook_name}.{feature}.train.log"), mode="w") as f_writer:
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
     f_writer.write(f"{confusion_matrix}\n")
@@ -133,7 +133,7 @@ print("Classification Report:\n\n", cls_report)
 print(f"{confusion_matrix}\n")
 
 # log file
-with open(dst_dir.joinpath(f"{notebook_name}.test.log"), mode="w") as f_writer:
+with open(dst_dir.joinpath(f"{notebook_name}.{feature}.test.log"), mode="w") as f_writer:
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
     f_writer.write(f"{confusion_matrix}\n")
