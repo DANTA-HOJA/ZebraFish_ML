@@ -82,15 +82,15 @@ print(rel_path)
 
 data = []
 for palmskin_dname in tqdm(training_df["palmskin_dname"]):
-    image_path = str(processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path))
-    image = cv2.imread(image_path)
+    img_path: Path = processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path)
+    image = cv2.imread(str(img_path))
     if image is not None:
         image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{img_mode}"))
         image = cv2.resize(image, img_resize, interpolation=cv2.INTER_CUBIC)
         image = image.flatten()
-        data.append([image, image_path])
+        data.append([image, img_path])
 
-features, images  = zip(*data)
+features, img_paths  = zip(*data)
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -204,15 +204,15 @@ with open(dst_dir.joinpath(f"{notebook_name}.{img_mode}.train.log"), mode="w") a
 # %%
 data = []
 for palmskin_dname in tqdm(test_df["palmskin_dname"]):
-    image_path = str(processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path))
-    image = cv2.imread(image_path)
+    img_path: Path = processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path)
+    image = cv2.imread(str(img_path))
     if image is not None:
         image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{img_mode}"))
         image = cv2.resize(image, img_resize, interpolation=cv2.INTER_CUBIC)
         image = image.flatten()
-        data.append([image, image_path])
+        data.append([image, img_path])
 
-features, images  = zip(*data)
+features, img_paths  = zip(*data)
 
 # -----------------------------------------------------------------------------/
 # %%
