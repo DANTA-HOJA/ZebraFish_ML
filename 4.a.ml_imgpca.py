@@ -116,11 +116,10 @@ import matplotlib.pyplot as plt
 prop_var = pca.explained_variance_ratio_
 eigenvalues = pca.explained_variance_
  
-plt.plot(np.arange(pca.n_components_), 
-         prop_var, 
-         'ro-')
-plt.title('Figure 1: Scree Plot', fontsize=8)
-plt.ylabel('Proportion of Variance', fontsize=8)
+plt.plot(np.arange(pca.n_components_), prop_var, 'ro-')
+plt.xlabel("PCA components")
+plt.xticks(range(pca.n_components_), range(pca.n_components_))
+plt.title("Proportion of Variance", fontsize=8)
 plt.show()
 
 accum_prop_var = 0
