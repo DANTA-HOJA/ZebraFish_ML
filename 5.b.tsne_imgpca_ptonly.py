@@ -111,7 +111,7 @@ if len(img_paths) > num_images_to_plot:
 # -----------------------------------------------------------------------------/
 # %%
 X = np.array(pca_features)
-tsne = TSNE(n_components=2, perplexity=20, verbose=2, n_iter=10000).fit_transform(X)
+tsne = TSNE(n_components=2, perplexity=20, verbose=2, n_iter=50000).fit_transform(X)
 
 # -----------------------------------------------------------------------------/
 # %% [markdown]
