@@ -18,7 +18,6 @@ from sklearn.feature_extraction import image
 from sklearn.manifold import TSNE
 from tqdm.auto import tqdm
 
-from modules.data import dname
 from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.shared.config import load_config
 from modules.shared.utils import create_new_dir, get_repo_root
@@ -112,7 +111,7 @@ if len(img_paths) > num_images_to_plot:
 # -----------------------------------------------------------------------------/
 # %%
 X = np.array(pca_features)
-tsne = TSNE(n_components=2, perplexity=20,verbose=2, n_iter=10000).fit_transform(X)
+tsne = TSNE(n_components=2, perplexity=20, verbose=2, n_iter=10000).fit_transform(X)
 
 # -----------------------------------------------------------------------------/
 # %% [markdown]
@@ -197,12 +196,12 @@ fig.tight_layout()
 # %%
 import json
 
-fig.savefig(dst_dir.joinpath(f"tSNE_{img_mode}.png"))
+fig.savefig(dst_dir.joinpath(f"tSNE.{img_mode}.png"))
 
-data = [{"path":str(path.resolve()), "point":[float(x), float(y)]}
+data = [{"path": str(path.resolve()), "point": [float(x), float(y)]}
             for path, x, y in zip(img_paths, tx, ty)]
 
-tsne_path = dst_dir.joinpath(f"tSNE_{img_mode}.json")
+tsne_path = dst_dir.joinpath(f"tSNE.{img_mode}.json")
 with open(tsne_path, 'w') as f_writer:
     json.dump(data, f_writer, indent=4)
 
@@ -265,4 +264,4 @@ for path, palmskin_dname, grid_pos in zip(img_paths, df.index, grid_assignment[0
 # %%
 background = Image.new("RGB", grid_image.size, (255, 255, 255))
 background.paste(grid_image, mask=grid_image.split()[3]) # 3 is the alpha channel
-background.save(dst_dir.joinpath(f"grid-tSNE_{img_mode}.png"))
+background.save(dst_dir.joinpath(f"grid-tSNE.{img_mode}.png"))
