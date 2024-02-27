@@ -32,8 +32,8 @@ config = load_config("ml_analysis.toml")
 palmskin_result_name: Path = Path(config["data_processed"]["palmskin_result_name"])
 cluster_desc: str = config["data_processed"]["cluster_desc"]
 dark: int = config["SLIC"]["dark"]
-imgpca_mode: str = config["ML"]["imgpca_mode"]
-imgpca_resize: tuple = tuple(config["ML"]["imgpca_resize"])
+img_mode: str = config["ML"]["img_mode"]
+img_resize: tuple = tuple(config["ML"]["img_resize"])
 rich.print("", Pretty(config, expand_all=True))
 
 # -----------------------------------------------------------------------------/
@@ -85,8 +85,8 @@ for palmskin_dname in tqdm(training_df["palmskin_dname"]):
     image_path = str(processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path))
     image = cv2.imread(image_path)
     if image is not None:
-        image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{imgpca_mode}"))
-        image = cv2.resize(image, imgpca_resize, interpolation=cv2.INTER_CUBIC)
+        image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{img_mode}"))
+        image = cv2.resize(image, img_resize, interpolation=cv2.INTER_CUBIC)
         image = image.flatten()
         data.append([image, image_path])
 
@@ -143,7 +143,7 @@ fig, axes = plt.subplots(1, 5, figsize=(4, 3), dpi=1000)
 assert len(axes.flatten()) == len(pca.components_)
 
 for i, ax in enumerate(axes.flatten()):
-    pc = pca.components_[i].reshape(*imgpca_resize[::-1], 3)
+    pc = pca.components_[i].reshape(*img_resize[::-1], 3)
     pc = (pc-np.min(pc)) / (np.max(pc) - np.min(pc))
     ax.imshow(pc)
     ax.set_title("pc{} ({:.4f})".format(i, random_forest.feature_importances_[i]))
@@ -157,7 +157,7 @@ fig2, axes2 = plt.subplots(1, 2, figsize=(4,3), dpi=1000)
 
 # normal
 pc = np.mean((pca.components_), axis=0)
-pc = pc.reshape(*imgpca_resize[::-1], 3)
+pc = pc.reshape(*img_resize[::-1], 3)
 pc = (pc-np.min(pc)) / (np.max(pc) - np.min(pc))
 axes2[0].imshow(pc)
 
@@ -169,7 +169,7 @@ for i, (pc, fimp) in enumerate(zip(pca_weighted_c, random_forest.feature_importa
     pca_weighted_c[i] = pc*fimp
 
 pc = np.mean(pca_weighted_c, axis=0)
-pc = pc.reshape(*imgpca_resize[::-1], 3)
+pc = pc.reshape(*img_resize[::-1], 3)
 pc = (pc-np.min(pc)) / (np.max(pc) - np.min(pc))
 axes2[1].imshow(pc)
 
@@ -191,7 +191,7 @@ print("Classification Report:\n\n", cls_report)
 print(f"{confusion_matrix}\n")
 
 # log file
-with open(dst_dir.joinpath(f"{notebook_name}.{imgpca_mode}.train.log"), mode="w") as f_writer:
+with open(dst_dir.joinpath(f"{notebook_name}.{img_mode}.train.log"), mode="w") as f_writer:
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
     f_writer.write(f"{confusion_matrix}\n")
@@ -207,8 +207,8 @@ for palmskin_dname in tqdm(test_df["palmskin_dname"]):
     image_path = str(processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path))
     image = cv2.imread(image_path)
     if image is not None:
-        image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{imgpca_mode}"))
-        image = cv2.resize(image, imgpca_resize, interpolation=cv2.INTER_CUBIC)
+        image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{img_mode}"))
+        image = cv2.resize(image, img_resize, interpolation=cv2.INTER_CUBIC)
         image = image.flatten()
         data.append([image, image_path])
 
@@ -234,7 +234,7 @@ print("Classification Report:\n\n", cls_report)
 print(f"{confusion_matrix}\n")
 
 # log file
-with open(dst_dir.joinpath(f"{notebook_name}.{imgpca_mode}.test.log"), mode="w") as f_writer:
+with open(dst_dir.joinpath(f"{notebook_name}.{img_mode}.test.log"), mode="w") as f_writer:
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
     f_writer.write(f"{confusion_matrix}\n")
