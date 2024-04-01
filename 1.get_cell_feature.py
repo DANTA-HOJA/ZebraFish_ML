@@ -1,5 +1,6 @@
 import os
 import sys
+from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -46,8 +47,8 @@ def count_average_size(analysis_dict:dict[str, Any], key:str) -> tuple[float, st
     # -------------------------------------------------------------------------/
 
 
-def get_max_path_size(seg:np.ndarray) -> tuple[float, str]:
-    """
+def get_max_path_size(seg:np.ndarray) -> tuple[int, str]:
+    """ unit: pixel
     """
     max_size = 0
     
@@ -60,6 +61,23 @@ def get_max_path_size(seg:np.ndarray) -> tuple[float, str]:
                 max_size = size
     
     return int(max_size), "max_patch_size"
+    # -------------------------------------------------------------------------/
+
+
+def get_topn_path_size(seg:np.ndarray, top_n:int=30) -> tuple[list[int], str]:
+    """
+    """
+    tmp = patch_seg.flatten().tolist()
+    tmp = Counter(tmp)
+    
+    try: # remove background
+        tmp.pop(0) 
+    except KeyError:
+        print("Warning: background label missing")
+    
+    tmp = dict(sorted(tmp.items(), reverse=True, key=lambda x: x[1]))
+    
+    return list(tmp.values())[:top_n], f"top{top_n}_path_size"
     # -------------------------------------------------------------------------/
 
 
@@ -128,8 +146,8 @@ if __name__ == '__main__':
             
             print(f"[ {dname_dir.parts[-1]} ]")
             cell_seg, patch_seg = run_single_slic_analysis(slic_dir, result_path,
-                                                           n_segments, dark, merge,
-                                                           debug_mode)
+                                                            n_segments, dark, merge,
+                                                            debug_mode)
             
             # update
             analysis_dict = {}
@@ -139,6 +157,7 @@ if __name__ == '__main__':
             analysis_dict = update_slic_analysis_dict(analysis_dict, *count_average_size(analysis_dict, "cell"))
             analysis_dict = update_slic_analysis_dict(analysis_dict, *count_average_size(analysis_dict, "patch"))
             analysis_dict = update_slic_analysis_dict(analysis_dict, *get_max_path_size(patch_seg))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *get_topn_path_size(patch_seg))
             cli_out.new_line()
             
             # update info to toml file
