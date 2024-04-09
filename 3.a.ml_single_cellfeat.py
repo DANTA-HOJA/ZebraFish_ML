@@ -71,7 +71,7 @@ training_df
 # -----------------------------------------------------------------------------/
 # %%
 feature = config["ML"]["single_feature"]
-assert feature in df.columns, \
+assert feature in df.columns[3:], \
             f"Feature should be one of followings: {list(df.columns)[3:]}"
 
 # -----------------------------------------------------------------------------/
