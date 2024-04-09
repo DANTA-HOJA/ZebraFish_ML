@@ -77,7 +77,7 @@ def get_topn_path_size(seg:np.ndarray, top_n:int=30) -> tuple[list[int], str]:
     
     tmp = dict(sorted(tmp.items(), reverse=True, key=lambda x: x[1]))
     
-    return list(tmp.values())[:top_n], f"top{top_n}_path_size"
+    return list(tmp.values())[:top_n], f"top{top_n}_patch_size"
     # -------------------------------------------------------------------------/
 
 
