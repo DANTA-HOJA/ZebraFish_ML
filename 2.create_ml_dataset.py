@@ -31,6 +31,7 @@ if __name__ == '__main__':
     palmskin_result_name: Path = Path(config["data_processed"]["palmskin_result_name"])
     cluster_desc: str = config["data_processed"]["cluster_desc"]
     dark: int = config["SLIC"]["dark"]
+    topn_patch = config["ML"]["topn_patch"]
     print("", Pretty(config, expand_all=True))
     cli_out.divide()
     
@@ -62,12 +63,20 @@ if __name__ == '__main__':
         temp_dict["dataset"] = clustered_df.loc[fish_id, "dataset"]
         # -------------------------------------------------------
         for k, v in slic_analysis.items():
+            if k == f"patch_sizes": continue
             temp_dict[k] = v
+        
+        for i, patch_size in enumerate(slic_analysis[f"patch_sizes"], start=1):
+            temp_dict[f"top{i}_patch"] = patch_size
+            if i == topn_patch: break
         # -------------------------------------------------------
         
         temp_df = pd.DataFrame(temp_dict, index=[0])
         if dataset_df.empty: dataset_df = temp_df.copy()
         else: dataset_df = pd.concat([dataset_df, temp_df], ignore_index=True)
+    
+    # drop columns if any NAN values
+    dataset_df = dataset_df.dropna(axis=1)
     
     # save Dataframe as a CSV file
     save_path = repo_root.joinpath("data/generated/ML", processed_di.instance_name,
