@@ -47,8 +47,10 @@ def count_average_size(analysis_dict:dict[str, Any], key:str) -> tuple[float, st
     # -------------------------------------------------------------------------/
 
 
-def get_max_path_size(seg:np.ndarray) -> tuple[int, str]:
-    """ unit: pixel
+def get_max_patch_size(seg:np.ndarray) -> tuple[int, str]:
+    """ (deprecated) unit: pixel
+    
+        Note: this function is replaced by `get_patch_size()`
     """
     max_size = 0
     
@@ -64,20 +66,20 @@ def get_max_path_size(seg:np.ndarray) -> tuple[int, str]:
     # -------------------------------------------------------------------------/
 
 
-def get_topn_path_size(seg:np.ndarray, top_n:int=30) -> tuple[list[int], str]:
+def get_patch_sizes(seg:np.ndarray) -> tuple[list[int], str]:
+    """ unit: pixel
     """
-    """
-    tmp = patch_seg.flatten().tolist()
+    tmp = seg.flatten().tolist()
     tmp = Counter(tmp)
     
     try: # remove background
-        tmp.pop(0) 
+        tmp.pop(0)
     except KeyError:
         print("Warning: background label missing")
     
     tmp = dict(sorted(tmp.items(), reverse=True, key=lambda x: x[1]))
     
-    return list(tmp.values())[:top_n], f"top{top_n}_patch_size"
+    return list(tmp.values()), f"patch_sizes"
     # -------------------------------------------------------------------------/
 
 
@@ -156,8 +158,7 @@ if __name__ == '__main__':
             analysis_dict = update_slic_analysis_dict(analysis_dict, *count_element(patch_seg, "patch"))
             analysis_dict = update_slic_analysis_dict(analysis_dict, *count_average_size(analysis_dict, "cell"))
             analysis_dict = update_slic_analysis_dict(analysis_dict, *count_average_size(analysis_dict, "patch"))
-            analysis_dict = update_slic_analysis_dict(analysis_dict, *get_max_path_size(patch_seg))
-            analysis_dict = update_slic_analysis_dict(analysis_dict, *get_topn_path_size(patch_seg))
+            analysis_dict = update_slic_analysis_dict(analysis_dict, *get_patch_sizes(patch_seg))
             cli_out.new_line()
             
             # update info to toml file
