@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import rich
+from rich import print
 from rich.pretty import Pretty
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
@@ -80,10 +81,13 @@ training_df
 rel_path, _ = processed_di.get_sorted_results_dict("palmskin", str(palmskin_result_name))
 print(rel_path)
 
+img_fullsize = None
 data = []
 for palmskin_dname in tqdm(training_df["palmskin_dname"]):
     img_path: Path = processed_di.palmskin_processed_dir.joinpath(palmskin_dname, rel_path)
     image = cv2.imread(str(img_path))
+    if img_fullsize is None:
+        img_fullsize = image.shape[:2][::-1]
     if image is not None:
         image = cv2.cvtColor(image, getattr(cv2, f"COLOR_BGR2{img_mode}"))
         image = cv2.resize(image, img_resize, interpolation=cv2.INTER_CUBIC)
@@ -112,53 +116,60 @@ random_forest.fit(input_training, idx_gt_training)
 # -----------------------------------------------------------------------------/
 # %%
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 8})
 
-prop_var = pca.explained_variance_ratio_
 eigenvalues = pca.explained_variance_
- 
-plt.plot(np.arange(pca.n_components_), prop_var, 'ro-')
-plt.xlabel("PCA components")
-plt.xticks(range(pca.n_components_), range(pca.n_components_))
-plt.title("Proportion of Variance", fontsize=8)
-plt.show()
+prop_vars = pca.explained_variance_ratio_
+pca_n_comps = pca.n_components_
+
+plt.plot(np.arange(pca_n_comps), prop_vars, 'ro-')
+plt.xlabel("PCA Components")
+plt.xticks(range(pca_n_comps), range(1, pca_n_comps+1))
+plt.title("Percentage of Explained Variance")
+plt.savefig(dst_dir.joinpath(f"{pca_n_comps}c_explained_variance.png"))
 
 accum_prop_var = 0
-for i, prop_var in enumerate(pca.explained_variance_ratio_):
+for i, prop_var in enumerate(prop_vars, start=1):
     accum_prop_var += prop_var
     if accum_prop_var > 0.9:
-        print("{} PCA components, accum_prop_var: {}".format(i, accum_prop_var))
+        print(f"{i} PCA components, accum_prop_var: {accum_prop_var}")
         break
 
-print("{} PCA components, total_prop_var: {}".format(len(pca.explained_variance_ratio_),
-                                                     np.sum(pca.explained_variance_ratio_)))
-print("PCA feature_importances: {}".format(random_forest.feature_importances_))
+print(f"-> {pca_n_comps} PCA components")
+print(f"-> prop_vars: \n{prop_vars}")
+print(f"-> accum_prop_var: {np.sum(prop_vars)}")
+print(f"-> pca feature importances to model: \n{random_forest.feature_importances_}")
 
 # -----------------------------------------------------------------------------/
 # %%
-import matplotlib.pyplot as plt
-
-plt.rcParams.update({'font.size': 3})
-fig, axes = plt.subplots(1, 5, figsize=(4, 3), dpi=1000)
+fig, axes = plt.subplots(1, pca_n_comps, figsize=(pca_n_comps, 2), dpi=1000)
 assert len(axes.flatten()) == len(pca.components_)
 
+img_reducesize = np.uint(img_fullsize/np.gcd.reduce(img_fullsize)*200)
 for i, ax in enumerate(axes.flatten()):
     pc = pca.components_[i].reshape(*img_resize[::-1], 3)
+    pc = cv2.resize(pc, img_reducesize, interpolation=cv2.INTER_CUBIC)
     pc = (pc-np.min(pc)) / (np.max(pc) - np.min(pc))
     ax.imshow(pc)
-    ax.set_title("pc{} ({:.4f})".format(i, random_forest.feature_importances_[i]))
+    ax.set_title("pc{} ({:.4f})".format(i+1, random_forest.feature_importances_[i]), fontsize=8)
+    ax.set_xticks([])
+    ax.set_yticks([])
 
-fig.tight_layout()
+fig.savefig(dst_dir.joinpath(f"{pca_n_comps}c_feature_importances.png"))
 
 # -----------------------------------------------------------------------------/
 # %%
-plt.rcParams.update({'font.size': 3})
-fig2, axes2 = plt.subplots(1, 2, figsize=(4,3), dpi=1000)
+fig2, axes2 = plt.subplots(1, 2, figsize=(2, 2), dpi=1000)
 
 # normal
 pc = np.mean((pca.components_), axis=0)
 pc = pc.reshape(*img_resize[::-1], 3)
+pc = cv2.resize(pc, img_reducesize, interpolation=cv2.INTER_CUBIC)
 pc = (pc-np.min(pc)) / (np.max(pc) - np.min(pc))
 axes2[0].imshow(pc)
+axes2[0].set_title("normal")
+axes2[0].set_xticks([])
+axes2[0].set_yticks([])
 
 # weighted
 from copy import deepcopy
@@ -169,8 +180,14 @@ for i, (pc, fimp) in enumerate(zip(pca_weighted_c, random_forest.feature_importa
 
 pc = np.mean(pca_weighted_c, axis=0)
 pc = pc.reshape(*img_resize[::-1], 3)
+pc = cv2.resize(pc, img_reducesize, interpolation=cv2.INTER_CUBIC)
 pc = (pc-np.min(pc)) / (np.max(pc) - np.min(pc))
 axes2[1].imshow(pc)
+axes2[1].set_title("weighted")
+axes2[1].set_xticks([])
+axes2[1].set_yticks([])
+
+fig2.savefig(dst_dir.joinpath(f"{pca_n_comps}c_feature_importances_comp.png"))
 
 # -----------------------------------------------------------------------------/
 # %%
