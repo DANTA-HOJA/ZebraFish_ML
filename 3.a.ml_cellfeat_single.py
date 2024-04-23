@@ -1,4 +1,5 @@
 # %%
+import json
 import os
 import sys
 from collections import Counter
@@ -85,6 +86,20 @@ random_forest = RandomForestClassifier(n_estimators=100, random_state=rand_seed)
 # 訓練模型
 idx_gt_training = [label2idx[c_label] for c_label in training_df["class"]]
 random_forest.fit(input_training, idx_gt_training)
+
+# get auto tree depths
+tree_depths = {}
+for i, tree in enumerate(random_forest.estimators_):
+    tree_depths[f"Tree {i+1} depth"] = tree.tree_.max_depth
+
+tree_depths["mean depth"] = np.mean(list(tree_depths.values()))
+print(f"-> mean of tree depths: {tree_depths['mean depth']}")
+
+tree_depths["median depth"] = np.median(list(tree_depths.values()))
+print(f"-> median of tree depths: {tree_depths['median depth']}")
+
+with open(dst_dir.joinpath(f"{notebook_name}.{feature}.tree_depths.log"), mode="w") as f_writer:
+    json.dump(tree_depths, f_writer, indent=4)
 
 # -----------------------------------------------------------------------------/
 # %%
