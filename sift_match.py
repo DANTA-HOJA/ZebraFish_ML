@@ -3,11 +3,14 @@
 """
 
 import os
-import numpy as np
-import cv2
 import pickle
-from skimage.segmentation import mark_boundaries
+from pathlib import Path
+
+import cv2
+import numpy as np
 from skimage.measure import regionprops
+from skimage.segmentation import mark_boundaries
+
 
 def edgeremove(seg5): # removing segments on the edge
     labels = list(np.unique(seg5))
@@ -54,18 +57,16 @@ def bwim2(bw,im,name,ratio):
     cv2.waitKey(10)
 
 from win32api import GetSystemMetrics
+
 height = GetSystemMetrics(1) * 0.88
 width = GetSystemMetrics(0)
 
 #%%
-path0 = './'
+path0 = Path('./TestData/L_fish_31_A_crop_0_and_1')
 
 # pick the files
-files = []
-for folderName, subfolders, filenames in os.walk(path0):
-    for filename in filenames:
-        if 'tif' in filename and folderName == path0:
-            files.append(folderName+'/'+filename)
+files = path0.glob("*.tif*")
+files = [str(path) for path in files]
 print('total files:', len(files))
 
 #%% load transformation matrix from SIFT
@@ -75,7 +76,7 @@ MIN_MATCH_COUNT = 10
 img1 = cv2.imread(files[0],0)  # Load an color image in grayscale
 img2 = cv2.imread(files[1],0) # Load an color image in grayscale
 
-sift = cv2.xfeatures2d.SIFT_create()
+sift = cv2.SIFT_create()
 kp1, des1 = sift.detectAndCompute(img1,None)
 kp2, des2 = sift.detectAndCompute(img2,None)
 FLANN_INDEX_KDTREE = 0
@@ -115,7 +116,7 @@ im1 = cv2.imread(files[0])
 im2 = cv2.imread(files[1])
 ratio = height/im1.shape[0]
    
-segfile = path0 + 'im0.seg1.pkl'
+segfile = path0.joinpath('im0.seg1.pkl')
 f = open(segfile,'rb')
 seg1 = pickle.load(f)
 f.close()
@@ -124,7 +125,7 @@ labels1 = edgeremove(seg1)
 props = regionprops(seg1)
  
 # second image
-segfile = path0 + 'im1.seg1.pkl'
+segfile = path0.joinpath('im1.seg1.pkl')
 f = open(segfile,'rb')
 seg2 = pickle.load(f)
 f.close()
