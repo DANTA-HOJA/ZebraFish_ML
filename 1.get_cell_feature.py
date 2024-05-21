@@ -43,7 +43,12 @@ def count_average_size(analysis_dict:dict[str, Any], key:str) -> tuple[float, st
     area = analysis_dict["area"]
     element_cnt = analysis_dict[f"{key}_count"]
     
-    return  float(round(area/element_cnt, 5)), f"{key}_avg_size"
+    if element_cnt == 0:
+        average_size = 0
+    else:
+        average_size = float(round(area/element_cnt, 5))
+    
+    return  average_size, f"{key}_avg_size"
     # -------------------------------------------------------------------------/
 
 
