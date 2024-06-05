@@ -129,7 +129,7 @@ def run_single_slic_analysis(dir:Path, img_path:Path,
                 bwd = dila(bw) # touch neighbor
                 nlabels = np.unique(seg2[bwd]) # self + neighbor's labels
                 for nl in nlabels:
-                    if nl != label:
+                    if (nl > label) and (nl != 0):
                         bw2 = (seg2 == nl)
                         color2 = bwRGB(bw2, img) # neighbor's color
                         if col_dis(color1, color2) <= merge:

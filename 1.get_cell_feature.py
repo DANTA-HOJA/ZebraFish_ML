@@ -32,7 +32,7 @@ def count_area(seg:np.ndarray) -> tuple[int, str]:
 def count_element(seg:np.ndarray, key:str) -> tuple[int, str]:
     """
     """
-    return len(np.unique(seg))-1, f"{key}_count"
+    return len(np.unique(seg[seg > 0])), f"{key}_count"
     # -------------------------------------------------------------------------/
 
 
