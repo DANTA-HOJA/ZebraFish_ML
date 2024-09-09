@@ -1,0 +1,11 @@
+root = "" # absolute path of "ZebraFish_DB" on this computer
+
+data_nasdl          = "{Data}_NASDL"
+data_processed      = "{Data}_Processed"
+dataset_cropped     = "{Dataset}_Cropped" # AP with HHC (Horiz half cut)
+dataset_cropped_v2  = "{Dataset}_Cropped_v2" # AP with HHC (Horiz half cut)
+dataset_cropped_v3  = "{Dataset}_Cropped_v3" # User specify size
+model_history       = "{Model}_History"
+model_prediction    = "{Model}_Prediction"
+
+fiji_local = "" # absolute path of "Fiji (ImageJ)" on this computer
