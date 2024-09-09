@@ -1,0 +1,31 @@
+[data_processed]
+  instance_desc = "20240219_fixmm3d" # dir_name = {`instance_desc`}_Academia_Sinica_i[num]
+  palmskin_result_name = "03_RGB_direct_max_zproj.fixedroi.tif"
+  cluster_desc = "SURF3C_KMeansORIG_RND2022"
+  # clustered file: Clustered_File/`cluster_desc`/{`cluster_desc`}_datasplit.csv'
+
+# -----------------------------------------------------------------------------\
+[SLIC]
+  n_segments = 200
+  dark = 40
+  merge = 12
+  debug_mode = false
+
+# params from 'Academia_Sinica'
+#  palmskin_result_alias = "RGB_direct_max_zproj"
+#  n_segments = 500
+#  dark = 40
+#  merge = 12
+
+# other param set
+#  palmskin_result_alias = "RGB_m3d_HE"
+#  n_segments = 500
+#  dark = 40
+#  merge = 12
+
+# -----------------------------------------------------------------------------\
+[ML]
+  topn_patch = 30
+  single_feature = "top1_patch"
+  img_mode = "RGB" # RGB / GRAY
+  img_resize = [224, 224] # [width, height]
