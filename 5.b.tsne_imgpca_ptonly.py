@@ -16,6 +16,7 @@ from skimage import io
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction import image
 from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
 from tqdm.auto import tqdm
 
 from modules.data.processeddatainstance import ProcessedDataInstance
@@ -101,7 +102,7 @@ pca_features = pca.transform(features)
 
 # -----------------------------------------------------------------------------/
 # %%
-num_images_to_plot = len(img_paths)
+num_images_to_plot = len(img_paths) # if specify a number, only random select "n" samples to create the map
 
 if len(img_paths) > num_images_to_plot:
     sort_order = sorted(random.sample(range(len(img_paths)), num_images_to_plot))
@@ -111,12 +112,18 @@ if len(img_paths) > num_images_to_plot:
 # -----------------------------------------------------------------------------/
 # %%
 X = np.array(pca_features)
-tsne = TSNE(n_components=2, perplexity=20, verbose=2, n_iter=50000).fit_transform(X)
+
+# 特徵標準化處理
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+tsne = TSNE(n_components=2, perplexity=20, n_iter=50000,
+            random_state=rand_seed, verbose=2).fit_transform(X_scaled)
 
 # -----------------------------------------------------------------------------/
 # %% [markdown]
 # Internally, t-SNE uses an iterative approach, making small (or sometimes large) adjustments to the points. By default, t-SNE will go a maximum of 1000 iterations, but in practice, it often terminates early because it has found a locally optimal (good enough) embedding.
-# The variable tsne contains an array of unnormalized 2d points, corresponding to the embedding. In the next cell, we normalize the embedding so that lies entirely in the range (0,1).
+# The variable t-SNE contains an array of unnormalized 2d points, corresponding to the embedding. In the next cell, we normalize the embedding so that lies entirely in the range (0,1).
 
 # -----------------------------------------------------------------------------/
 # %% [markdown]
@@ -182,7 +189,7 @@ for path, palmskin_dname, x, y in zip(img_paths, df.index, tx, ty):
     full_image.paste(tile, (int((width-tile.size[0])*x), int((height-tile.size[1])*y)), mask=tile.convert('RGBA'))
 
 fig, ax = plt.subplots(1, 1, figsize=(12, 9), dpi=300)
-ax.set_title(f"tSNE ({img_mode} image, 5 PCA components)")
+ax.set_title(f"t-SNE ({img_mode} image, 5 PCA components)")
 
 # set legend
 for k, v in cls2color.items():
@@ -209,8 +216,8 @@ fig.savefig(dst_dir.joinpath(f"tSNE.ptonly.{img_mode}.png"))
 data = [{"path": str(path.resolve()), "point": [float(x), float(y)]}
             for path, x, y in zip(img_paths, tx, ty)]
 
-tsne_path = dst_dir.joinpath(f"tSNE.{img_mode}.json")
-with open(tsne_path, 'w') as f_writer:
+tsne_pt_path = dst_dir.joinpath(f"tSNE.{img_mode}.json")
+with open(tsne_pt_path, 'w') as f_writer:
     json.dump(data, f_writer, indent=4)
 
-print(f"Save t-SNE results to : '{tsne_path.parent}'")
+print(f"Save t-SNE results to : '{tsne_pt_path.parent}'")
