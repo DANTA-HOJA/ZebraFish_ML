@@ -189,7 +189,7 @@ for path, palmskin_dname, x, y in zip(img_paths, df.index, tx, ty):
     full_image.paste(tile, (int((width-tile.size[0])*x), int((height-tile.size[1])*y)), mask=tile.convert('RGBA'))
 
 fig, ax = plt.subplots(1, 1, figsize=(12, 9), dpi=300)
-ax.set_title(f"t-SNE ({img_mode} image, 5 PCA components)")
+ax.set_title(f"t-SNE ({img_mode} image, first 5 PCA components)")
 
 # set legend
 for k, v in cls2color.items():
