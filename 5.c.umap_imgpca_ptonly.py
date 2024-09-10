@@ -102,7 +102,7 @@ pca_features = pca.transform(features)
 
 # -----------------------------------------------------------------------------/
 # %%
-num_images_to_plot = len(img_paths)
+num_images_to_plot = len(img_paths) # if specify a number, only random select "n" samples to create the map
 
 if len(img_paths) > num_images_to_plot:
     sort_order = sorted(random.sample(range(len(img_paths)), num_images_to_plot))
