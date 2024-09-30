@@ -16,11 +16,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from tqdm.auto import tqdm
 
-from modules.data import dname
 from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.dl.tester.utils import confusion_matrix_with_class
 from modules.shared.config import load_config
 from modules.shared.utils import create_new_dir, get_repo_root
+from utils import save_confusion_matrix_display
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -36,7 +36,7 @@ cluster_desc: str = config["data_processed"]["cluster_desc"]
 dark: int = config["SLIC"]["dark"]
 img_mode: str = config["ML"]["img_mode"]
 img_resize: tuple = tuple(config["ML"]["img_resize"])
-rich.print("", Pretty(config, expand_all=True))
+print("", Pretty(config, expand_all=True))
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -63,8 +63,8 @@ df
 # %%
 labels = sorted(Counter(df["class"]).keys())
 label2idx = {label: idx for idx, label in enumerate(labels)}
-rich.print(f"labels = {labels}")
-rich.print(f"label2idx = {label2idx}")
+print(f"labels = {labels}")
+print(f"label2idx = {label2idx}")
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -80,7 +80,7 @@ training_df
 # -----------------------------------------------------------------------------/
 # %%
 rel_path, _ = processed_di.get_sorted_results_dict("palmskin", str(palmskin_result_name))
-print(rel_path)
+print(f"[yellow]{rel_path}")
 
 img_fullsize = None
 data = []
@@ -115,6 +115,8 @@ idx_gt_training = [label2idx[c_label] for c_label in training_df["class"]]
 random_forest.fit(input_training, idx_gt_training)
 
 # get auto tree depths
+print("\n", end="")
+
 tree_depths = {}
 for i, tree in enumerate(random_forest.estimators_):
     tree_depths[f"Tree {i+1} depth"] = tree.tree_.max_depth
@@ -131,6 +133,7 @@ with open(dst_dir.joinpath(f"{notebook_name}.{img_mode}.tree_depths.log"), mode=
 # -----------------------------------------------------------------------------/
 # %%
 import matplotlib.pyplot as plt
+
 plt.rcParams.update({'font.size': 8})
 
 eigenvalues = pca.explained_variance_
@@ -150,10 +153,12 @@ for i, prop_var in enumerate(prop_vars, start=1):
         print(f"{i} PCA components, accum_prop_var: {accum_prop_var}")
         break
 
+print("\n", end="")
 print(f"-> {pca_n_comps} PCA components")
-print(f"-> prop_vars: \n{prop_vars}")
+print(f"-> prop_vars: {prop_vars}")
 print(f"-> accum_prop_var: {np.sum(prop_vars)}")
-print(f"-> pca feature importances to model: \n{random_forest.feature_importances_}")
+print(f"-> pca feature importances to model: {random_forest.feature_importances_}")
+print("\n", end="")
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -269,6 +274,15 @@ with open(dst_dir.joinpath(f"{notebook_name}.{img_mode}.test.log"), mode="w") as
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
     f_writer.write(f"{confusion_matrix}\n")
+
+# Confusion Matrix (image ver.)
+save_confusion_matrix_display(y_true=gt_test,
+                              y_pred=pred_test,
+                              save_path=dst_dir,
+                              feature_desc=f"{notebook_name}",
+                              dataset_desc="test")
+
+print(f"Results Save Dir: '{dst_dir}'")
 
 # -----------------------------------------------------------------------------/
 # %%
