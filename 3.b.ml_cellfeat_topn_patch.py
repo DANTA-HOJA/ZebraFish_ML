@@ -15,7 +15,8 @@ from sklearn.metrics import classification_report
 from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.dl.tester.utils import confusion_matrix_with_class
 from modules.shared.config import load_config
-from modules.shared.utils import get_repo_root
+from modules.shared.utils import create_new_dir, get_repo_root
+from utils import save_confusion_matrix_display
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -42,7 +43,7 @@ slic_dirname = f"{palmskin_result_name.stem}_{{dark_{dark}}}"
 ml_csv = repo_root.joinpath("data/generated/ML", processed_di.instance_name,
                             cluster_desc, slic_dirname, "ml_dataset.csv")
 
-# dst
+# dst dir
 dst_dir = ml_csv.parent
 
 # -----------------------------------------------------------------------------/
@@ -73,6 +74,8 @@ training_df
 # %%
 input_training = training_df.iloc[:, 8:].to_numpy()
 notebook_name = notebook_name.replace("topn", f"top{str(input_training.shape[1])}")
+dst_dir = dst_dir.joinpath(notebook_name)
+create_new_dir(dst_dir)
 
 # 初始化 Random Forest 分類器
 rand_seed = int(cluster_desc.split("_")[-1].replace("RND", ""))
@@ -88,10 +91,10 @@ for i, tree in enumerate(random_forest.estimators_):
     tree_depths[f"Tree {i+1} depth"] = tree.tree_.max_depth
 
 tree_depths["mean depth"] = np.mean(list(tree_depths.values()))
-print(f"-> mean of tree depths: {tree_depths['mean depth']}")
+rich.print(f"-> mean of tree depths: {tree_depths['mean depth']}")
 
 tree_depths["median depth"] = np.median(list(tree_depths.values()))
-print(f"-> median of tree depths: {tree_depths['median depth']}")
+rich.print(f"-> median of tree depths: {tree_depths['median depth']}")
 
 with open(dst_dir.joinpath(f"{notebook_name}.tree_depths.log"), mode="w") as f_writer:
     json.dump(tree_depths, f_writer, indent=4)
@@ -111,10 +114,9 @@ _, confusion_matrix = confusion_matrix_with_class(prediction=pred_train,
                                                   ground_truth=gt_training)
 # display report
 print("Classification Report:\n\n", cls_report)
-print(f"{confusion_matrix}\n")
+rich.print(f"{confusion_matrix}\n")
 
 # log file
-
 with open(dst_dir.joinpath(f"{notebook_name}.train.log"), mode="w") as f_writer:
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
@@ -141,13 +143,22 @@ _, confusion_matrix = confusion_matrix_with_class(prediction=pred_test,
                                                   ground_truth=gt_test)
 # display report
 print("Classification Report:\n\n", cls_report)
-print(f"{confusion_matrix}\n")
+rich.print(f"{confusion_matrix}\n")
 
 # log file
 with open(dst_dir.joinpath(f"{notebook_name}.test.log"), mode="w") as f_writer:
     f_writer.write("Classification Report:\n\n")
     f_writer.write(f"{cls_report}\n\n")
     f_writer.write(f"{confusion_matrix}\n")
+
+# Confusion Matrix (image ver.)
+save_confusion_matrix_display(y_true=gt_test,
+                              y_pred=pred_test,
+                              save_path=dst_dir,
+                              feature_desc=notebook_name,
+                              dataset_desc="test")
+
+print(f"Results Save Dir: '{dst_dir}'")
 
 # -----------------------------------------------------------------------------/
 # %%
