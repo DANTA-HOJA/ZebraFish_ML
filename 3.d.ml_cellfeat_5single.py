@@ -15,8 +15,7 @@ from sklearn.metrics import classification_report
 from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.dl.tester.utils import confusion_matrix_with_class
 from modules.shared.config import load_config
-from modules.shared.utils import get_repo_root
-
+from modules.shared.utils import create_new_dir, get_repo_root
 # -----------------------------------------------------------------------------/
 # %%
 # notebook name
@@ -42,8 +41,9 @@ slic_dirname = f"{palmskin_result_name.stem}_{{dark_{dark}}}"
 ml_csv = repo_root.joinpath("data/generated/ML", processed_di.instance_name,
                             cluster_desc, slic_dirname, "ml_dataset.csv")
 
-# dst
-dst_dir = ml_csv.parent
+# dst dir
+dst_dir = ml_csv.parent.joinpath(notebook_name)
+create_new_dir(dst_dir)
 
 # -----------------------------------------------------------------------------/
 # %%
