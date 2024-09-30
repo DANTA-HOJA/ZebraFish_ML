@@ -7,7 +7,8 @@ from sklearn.metrics import ConfusionMatrixDisplay
 def save_confusion_matrix_display(y_true: list[str],
                                   y_pred: list[str],
                                   save_path: Path,
-                                  feature_desc: str):
+                                  feature_desc: str,
+                                  dataset_desc: str):
     """
     save 2 file:
     1. `save_path`/`feature_desc`.cm.png
@@ -18,7 +19,7 @@ def save_confusion_matrix_display(y_true: list[str],
     plt.tight_layout()
     plt.ylabel("Ground truth")
     plt.xlabel("Prediction")
-    plt.savefig(save_path.joinpath(f"{feature_desc}.cm.png"))
+    plt.savefig(save_path.joinpath(f"{feature_desc}.{dataset_desc}.cm.png"))
     
     # normalized by row (summation of ground truth samples)
     ConfusionMatrixDisplay.from_predictions(y_true=y_true,
@@ -28,5 +29,5 @@ def save_confusion_matrix_display(y_true: list[str],
     plt.tight_layout()
     plt.xlabel("Prediction")
     plt.ylabel("Ground truth")
-    plt.savefig(save_path.joinpath(f"{feature_desc}.cm.normgt.png"))
+    plt.savefig(save_path.joinpath(f"{feature_desc}.{dataset_desc}.cm.normgt.png"))
     # -------------------------------------------------------------------------/
