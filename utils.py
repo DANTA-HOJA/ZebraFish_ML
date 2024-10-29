@@ -9,6 +9,17 @@ mpl.rcParams.update(new_rc_params)
 # -----------------------------------------------------------------------------/
 
 
+def get_slic_param_name(config: dict) -> str:
+    """
+    """
+    n_segments: int  = config["SLIC"]["n_segments"]
+    dark: int        = config["SLIC"]["dark"]
+    merge: int       = config["SLIC"]["merge"]
+    
+    return f"S{n_segments}_D{dark}_M{merge}"
+    # -------------------------------------------------------------------------/
+
+
 def save_confusion_matrix_display(y_true: list[str],
                                   y_pred: list[str],
                                   save_path: Path,

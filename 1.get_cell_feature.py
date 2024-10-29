@@ -18,6 +18,7 @@ from modules.shared.clioutput import CLIOutput
 from modules.shared.config import dump_config, load_config
 from modules.shared.utils import create_new_dir, get_repo_root
 from slic_labeling import run_single_slic_analysis
+from utils import get_slic_param_name
 
 install()
 # -----------------------------------------------------------------------------/
@@ -161,7 +162,7 @@ if __name__ == '__main__':
                 cv2.imwrite(str(target_path), tmp_img)
             
             # create slic params dir
-            slic_param_name = f"S{n_segments}_D{dark}_M{merge}"
+            slic_param_name = get_slic_param_name(config)
             slic_dir = slic_dir.joinpath(f"{result_name}.{slic_param_name}")
             create_new_dir(slic_dir)
             
