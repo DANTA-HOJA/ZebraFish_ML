@@ -12,6 +12,7 @@ from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.shared.clioutput import CLIOutput
 from modules.shared.config import load_config
 from modules.shared.utils import create_new_dir, get_repo_root
+from utils import get_slic_param_name
 
 install()
 # -----------------------------------------------------------------------------/
@@ -30,18 +31,19 @@ if __name__ == '__main__':
     config = load_config("ml_analysis.toml")
     palmskin_result_name: Path = Path(config["data_processed"]["palmskin_result_name"])
     cluster_desc: str = config["data_processed"]["cluster_desc"]
-    dark: int = config["SLIC"]["dark"]
     topn_patch = config["ML"]["topn_patch"]
     print("", Pretty(config, expand_all=True))
     cli_out.divide()
     
     # get `slic_dirname`
-    slic_dirname = f"{palmskin_result_name.stem}_{{dark_{dark}}}"
+    slic_param_name = get_slic_param_name(config)
+    slic_dirname = f"{palmskin_result_name.stem}.{slic_param_name}"
     
     # load `clustered file`
     csv_path = processed_di.clustered_files_dict[cluster_desc]
     clustered_df: pd.DataFrame = pd.read_csv(csv_path, encoding='utf_8_sig', index_col=[0])
     clustered_df["fish_id"] = clustered_df["Brightfield"].apply(lambda x: dname.get_dname_sortinfo(x)[0])
+    clustered_df = clustered_df.set_index("fish_id")
     palmskin_dnames = sorted(pd.concat([clustered_df["Palmskin Anterior (SP8)"],
                                         clustered_df["Palmskin Posterior (SP8)"]]), key=dname.get_dname_sortinfo)
     
@@ -51,7 +53,7 @@ if __name__ == '__main__':
         # prepare
         path = processed_di.palmskin_processed_dir.joinpath(palmskin_dname)
         slic_analysis = path.joinpath("SLIC", slic_dirname,
-                                      f"{palmskin_result_name.stem}.ana.toml")
+                                      f"{slic_dirname}.ana.toml")
         slic_analysis = load_config(slic_analysis)
         fish_id = dname.get_dname_sortinfo(palmskin_dname)[0]
         
