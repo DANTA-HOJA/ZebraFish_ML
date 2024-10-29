@@ -81,8 +81,10 @@ if __name__ == '__main__':
     dataset_df = dataset_df.dropna(axis=1)
     
     # save Dataframe as a CSV file
-    save_path = repo_root.joinpath("data/generated/ML", processed_di.instance_name,
-                                   cluster_desc, slic_dirname, f"ml_dataset.csv")
+    save_path = Path(__file__).parent.joinpath("data/generated/ML",
+                                               processed_di.instance_name,
+                                               cluster_desc, slic_dirname,
+                                               f"ml_dataset.csv")
     create_new_dir(save_path.parent)
     dataset_df.to_csv(save_path, encoding='utf_8_sig', index=False)
     print(f"ML_table: '{save_path}'\n")
