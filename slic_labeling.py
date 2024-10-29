@@ -58,9 +58,14 @@ def run_single_slic_analysis(dir:Path, img_path:Path,
                              debug_mode:bool=False):
     """
     """
-    img_name = img_path.stem
+    result_name = img_path.stem.split(".")[0]
+    slic_param_name = f"S{n_segments}_D{dark}_M{merge}"
+    img_name = f"{result_name}.{slic_param_name}"
+    
+    """ read image """
     img = cv2.imread(str(img_path))
     
+    """ run SLIC """
     seg0 = slic(cv2.cvtColor(img, cv2.COLOR_BGR2RGB),
                     n_segments = n_segments,
                     channel_axis=-1,

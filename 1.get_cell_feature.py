@@ -5,6 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+import cv2
 import numpy as np
 from rich import print
 from rich.pretty import Pretty
@@ -12,6 +13,7 @@ from rich.progress import Progress
 from rich.traceback import install
 
 from modules.data.processeddatainstance import ProcessedDataInstance
+from modules.dl.dataset.augmentation import crop_base_size
 from modules.shared.clioutput import CLIOutput
 from modules.shared.config import dump_config, load_config
 from modules.shared.utils import create_new_dir, get_repo_root
@@ -121,6 +123,7 @@ if __name__ == '__main__':
     cli_out.divide()
     processed_di = ProcessedDataInstance()
     processed_di.parse_config("ml_analysis.toml")
+    w512h1024_cropper = crop_base_size(512, 1024)
 
     # load config
     # `dark` and `merge` are two parameters as color space distance, determined by experiences
@@ -148,11 +151,22 @@ if __name__ == '__main__':
             
             result_name = result_path.stem
             dname_dir = Path(str(result_path).replace(rel_path, ""))
-            slic_dir = dname_dir.joinpath(f"SLIC/{result_name}_{{dark_{dark}}}")
+            slic_dir = dname_dir.joinpath("SLIC")
+            create_new_dir(slic_dir)
+            
+            # get image, size: W512_H1024 (FixedROI)
+            target_path = slic_dir.joinpath(f"{result_name}.W512_H1024.tif")
+            if not target_path.exists():
+                tmp_img = w512h1024_cropper(image=cv2.imread(str(result_path)))
+                cv2.imwrite(str(target_path), tmp_img)
+            
+            # create slic params dir
+            slic_param_name = f"S{n_segments}_D{dark}_M{merge}"
+            slic_dir = slic_dir.joinpath(f"{result_name}.{slic_param_name}")
             create_new_dir(slic_dir)
             
             print(f"[ {dname_dir.parts[-1]} ]")
-            cell_seg, patch_seg = run_single_slic_analysis(slic_dir, result_path,
+            cell_seg, patch_seg = run_single_slic_analysis(slic_dir, target_path,
                                                             n_segments, dark, merge,
                                                             debug_mode)
             
@@ -167,7 +181,7 @@ if __name__ == '__main__':
             cli_out.new_line()
             
             # update info to toml file
-            toml_file = slic_dir.joinpath(f"{result_name}.ana.toml")
+            toml_file = slic_dir.joinpath(f"{result_name}.{slic_param_name}.ana.toml")
             update_toml_file(toml_file, analysis_dict)
             
             # update pbar
