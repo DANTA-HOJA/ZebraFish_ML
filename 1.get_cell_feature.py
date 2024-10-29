@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # load config
     # `dark` and `merge` are two parameters as color space distance, determined by experiences
     config = load_config("ml_analysis.toml")
-    palmskin_result_name: str = config["data_processed"]["palmskin_result_name"]
+    palmskin_result_name: Path = Path(config["data_processed"]["palmskin_result_name"])
     n_segments: int  = config["SLIC"]["n_segments"]
     dark: int        = config["SLIC"]["dark"]
     merge: int       = config["SLIC"]["merge"]
@@ -137,9 +137,13 @@ if __name__ == '__main__':
     print("", Pretty(config, expand_all=True))
     cli_out.divide()
 
+    # get `slic_dirname`
+    slic_param_name = get_slic_param_name(config)
+    slic_dirname = f"{palmskin_result_name.stem}.{slic_param_name}"
+    
     """ Colloct image file names """
     rel_path, sorted_results_dict = \
-        processed_di.get_sorted_results_dict("palmskin", palmskin_result_name)
+        processed_di.get_sorted_results_dict("palmskin", str(palmskin_result_name))
     result_paths = list(sorted_results_dict.values())
     print(f"Total files: {len(result_paths)}")
 
@@ -150,23 +154,20 @@ if __name__ == '__main__':
         
         for result_path in result_paths:
             
-            result_name = result_path.stem
             dname_dir = Path(str(result_path).replace(rel_path, ""))
-            slic_dir = dname_dir.joinpath("SLIC")
+            print(f"[ {dname_dir.parts[-1]} ]")
+            
+            # create `slic_dir`
+            slic_dir = dname_dir.joinpath(f"SLIC/{slic_dirname}")
             create_new_dir(slic_dir)
             
             # get image, size: W512_H1024 (FixedROI)
-            target_path = slic_dir.joinpath(f"{result_name}.W512_H1024.tif")
+            target_path = slic_dir.parent.joinpath(f"{result_path.stem}.W512_H1024.tif")
             if not target_path.exists():
                 tmp_img = w512h1024_cropper(image=cv2.imread(str(result_path)))
                 cv2.imwrite(str(target_path), tmp_img)
             
-            # create slic params dir
-            slic_param_name = get_slic_param_name(config)
-            slic_dir = slic_dir.joinpath(f"{result_name}.{slic_param_name}")
-            create_new_dir(slic_dir)
-            
-            print(f"[ {dname_dir.parts[-1]} ]")
+            # slic
             cell_seg, patch_seg = run_single_slic_analysis(slic_dir, target_path,
                                                             n_segments, dark, merge,
                                                             debug_mode)
@@ -182,7 +183,7 @@ if __name__ == '__main__':
             cli_out.new_line()
             
             # update info to toml file
-            toml_file = slic_dir.joinpath(f"{result_name}.{slic_param_name}.ana.toml")
+            toml_file = slic_dir.joinpath(f"{slic_dirname}.ana.toml")
             update_toml_file(toml_file, analysis_dict)
             
             # update pbar
