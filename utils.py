@@ -1,7 +1,9 @@
+from collections import Counter
 from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.metrics import ConfusionMatrixDisplay
 
 new_rc_params = {'text.usetex': False, "svg.fonttype": 'none'}
@@ -17,6 +19,27 @@ def get_slic_param_name(config: dict) -> str:
     merge: int       = config["SLIC"]["merge"]
     
     return f"S{n_segments}_D{dark}_M{merge}"
+    # -------------------------------------------------------------------------/
+
+
+def get_class_weight_dict(dataset_df:pd.DataFrame,
+                          labels: list, label2idx: dict[str, int]):
+    """
+    """
+    counter = Counter(dataset_df["class"])
+    
+    # rearrange dict
+    class_counts_dict: dict[str, int] = {}
+    for cls in labels:
+        class_counts_dict[cls] = counter[cls]
+    
+    class_weights_dict: dict[int, int] = {}
+    total_samples = sum(class_counts_dict.values())
+    
+    for key, value in class_counts_dict.items(): # value = number of samples of the class
+        class_weights_dict[label2idx[key]] = (1 - (value/total_samples))
+    
+    return class_weights_dict
     # -------------------------------------------------------------------------/
 
 
