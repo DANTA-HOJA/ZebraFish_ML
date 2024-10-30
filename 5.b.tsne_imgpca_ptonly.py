@@ -5,6 +5,7 @@ import random
 from pathlib import Path
 
 import cv2
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from PIL import Image, ImageOps
@@ -24,6 +25,8 @@ from modules.shared.config import load_config
 from modules.shared.utils import create_new_dir
 from utils import get_slic_param_name
 
+new_rc_params = {'text.usetex': False, "svg.fonttype": 'none'}
+mpl.rcParams.update(new_rc_params)
 # -----------------------------------------------------------------------------/
 # %%
 # notebook name
@@ -216,6 +219,7 @@ fig.tight_layout()
 import json
 
 fig.savefig(dst_dir.joinpath(f"tSNE.ptonly.{img_mode}.png"))
+fig.savefig(dst_dir.joinpath(f"tSNE.ptonly.{img_mode}.svg"))
 
 data = [{"path": str(path.resolve()), "point": [float(x), float(y)]}
             for path, x, y in zip(img_paths, tx, ty)]
