@@ -8,7 +8,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pandas as pd
-import rich
 from rich import print
 from rich.pretty import Pretty
 from sklearn.decomposition import PCA
@@ -19,8 +18,8 @@ from tqdm.auto import tqdm
 from modules.data.processeddatainstance import ProcessedDataInstance
 from modules.dl.tester.utils import confusion_matrix_with_class
 from modules.shared.config import load_config
-from modules.shared.utils import create_new_dir, get_repo_root
-from utils import save_confusion_matrix_display
+from modules.shared.utils import create_new_dir
+from utils import get_slic_param_name, save_confusion_matrix_display
 
 # -----------------------------------------------------------------------------/
 # %%
@@ -33,9 +32,6 @@ notebook_name = Path(__file__).stem
 config = load_config("ml_analysis.toml")
 palmskin_result_name: Path = Path(config["data_processed"]["palmskin_result_name"])
 cluster_desc: str = config["data_processed"]["cluster_desc"]
-dark: int = config["SLIC"]["dark"]
-img_mode: str = config["ML"]["img_mode"]
-img_resize: tuple = tuple(config["ML"]["img_resize"])
 print("", Pretty(config, expand_all=True))
 
 # -----------------------------------------------------------------------------/
@@ -44,12 +40,15 @@ processed_di = ProcessedDataInstance()
 processed_di.parse_config("ml_analysis.toml")
 
 # src
-repo_root = get_repo_root()
-slic_dirname = f"{palmskin_result_name.stem}_{{dark_{dark}}}"
-ml_csv = repo_root.joinpath("data/generated/ML", processed_di.instance_name,
-                            cluster_desc, slic_dirname, "ml_dataset.csv")
+slic_param_name = get_slic_param_name(config)
+slic_dirname = f"{palmskin_result_name.stem}.{slic_param_name}"
+ml_csv = Path(__file__).parent.joinpath("data/generated/ML",
+                                        processed_di.instance_name,
+                                        cluster_desc, slic_dirname,
+                                        "ml_dataset.csv")
 
 # dst
+palmskin_result_name = Path(f"{palmskin_result_name.stem}.W512_H1024.tif")
 dst_dir = ml_csv.parents[1].joinpath(f"{palmskin_result_name.stem}.imgpca")
 create_new_dir(dst_dir)
 
@@ -81,6 +80,9 @@ training_df
 # %%
 rel_path, _ = processed_di.get_sorted_results_dict("palmskin", str(palmskin_result_name))
 print(f"[yellow]{rel_path}")
+
+img_mode: str = config["ML"]["img_mode"]
+img_resize: tuple = tuple(config["ML"]["img_resize"])
 
 img_fullsize = None
 data = []
